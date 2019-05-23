@@ -82,7 +82,7 @@ setup_file()
     # Create file and make atime and mtime zero.
 
     sudo $s_arg -u $test_user touch $FILE || return $?
-    if ! $TEST_PROG -q $FILE 0 0 0 0 > $RESULT_FILE; then
+    if ! $LTPMCEXEC $TEST_PROG -q $FILE 0 0 0 0 > $RESULT_FILE; then
         echo "Failed to set up test file $FILE" 1>&2
         exit 1
     fi
@@ -224,7 +224,7 @@ run_test()
     echo "Pathname test"
     setup_file $FILE "$1" "$2" "$3"
     cp $LTPROOT/testcases/bin/$TEST_PROG ./
-    CMD="./$TEST_PROG -q $FILE $4"
+    CMD="$LTPMCEXEC ./$TEST_PROG -q $FILE $4"
     echo "$CMD"
     sudo $s_arg -u $test_user $CMD > $RESULT_FILE
     check_result $? $5 $6 $7
@@ -233,7 +233,7 @@ run_test()
     if test $do_read_fd_test -ne 0; then
         echo "Readable file descriptor (futimens(3)) test"
         setup_file $FILE "$1" "$2" "$3"
-        CMD="./$TEST_PROG -q -d $FILE NULL $4"
+        CMD="$LTPMCEXEC ./$TEST_PROG -q -d $FILE NULL $4"
         echo "$CMD"
         sudo $s_arg -u $test_user $CMD > $RESULT_FILE
         check_result $? $5 $6 $7
@@ -246,7 +246,7 @@ run_test()
     if test $do_write_fd_test -ne 0; then
         echo "Writable file descriptor (futimens(3)) test"
         setup_file $FILE "$1" "$2" "$3"
-        CMD="./$TEST_PROG -q -w -d $FILE NULL $4"
+        CMD="$LTPMCEXEC ./$TEST_PROG -q -w -d $FILE NULL $4"
         echo "$CMD"
         sudo $s_arg -u $test_user $CMD > $RESULT_FILE
         check_result $? $5 $6 $7
@@ -481,7 +481,7 @@ echo
 echo "***** Testing pathname==NULL, dirfd!=AT_FDCWD, flags has" \
      "AT_SYMLINK_NOFOLLOW *****"
 setup_file $FILE "" 600 ""
-CMD="$TEST_PROG -q -n -d $FILE NULL $4"
+CMD="$LTPMCEXEC $TEST_PROG -q -n -d $FILE NULL $4"
 echo "$CMD"
 $CMD > $RESULT_FILE
 check_result $? EINVAL

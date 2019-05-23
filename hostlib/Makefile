@@ -1,5 +1,5 @@
 #
-#    Makefile for all tst_* API commands.
+#    lib Makefile.
 #
 #    Copyright (C) 2009, Cisco Systems Inc.
 #
@@ -17,28 +17,38 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Ngie Cooper, July 2009
+# Garrett Cooper, July 2009
 #
 
-top_srcdir		?= ../..
+top_srcdir		?= ..
 
-include $(top_srcdir)/include/mk/testcases.mk
+include $(top_srcdir)/include/mk/env_pre.mk
 
-# MCKERNEL:
-# Use host compiler for host tools.
-ifneq ($(HOSTCC),)
+vpath %.c $(top_srcdir)/lib
+
 CC			:= $(HOSTCC)
 CFLAGS			:= $(HOSTCFLAGS)
-LDFLAGS			:= $(HOSTLDFLAGS) -L$(top_srcdir)/hostlib
-endif
+LDFLAGS			:= $(HOSTLDFLAGS)
 
-CPPFLAGS		+= -D_GNU_SOURCE
+CFLAGS			+= -I.
 
-MAKE_TARGETS		:= $(addprefix tst_,brk brkm exit \
-			     res resm ncpus ncpus_conf ncpus_max \
-			     get_unused_port fs_has_free)
+#CPPFLAGS		+= -DGARRETT_IS_A_PEDANTIC_BASTARD
 
-include $(top_srcdir)/include/mk/generic_leaf_target.mk
+FILTER_OUT_LIBSRCS	:= mount_utils.c
 
-$(MAKE_TARGETS): %: ltpapicmd.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) $(OUTPUT_OPTION)
+LIB			:= libltp.a
+
+include $(top_srcdir)/include/mk/lib.mk
+
+LIBSRCS			:= $(subst $(abs_top_srcdir)/lib/,,$(wildcard $(abs_top_srcdir)/lib/*.c))
+LIBOBJS			:= $(LIBSRCS:.c=.o)
+
+$(LIB): $(notdir $(LIBOBJS))
+	if [ -z "$(strip $^)" ] ; then \
+		echo "Cowardly refusing to create empty archive"; \
+		exit 1; \
+	fi
+	$(if $(AR),$(AR),ar) -rc "$@" $^
+	$(if $(RANLIB),$(RANLIB),ranlib) "$@"
+
+include $(top_srcdir)/include/mk/generic_trunk_target.mk

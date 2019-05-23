@@ -165,6 +165,38 @@ find_test()
 
 source $LTPROOT/testcases/realtime/scripts/setenv.sh
 
+
+### setup for McKernel
+if [ -n "$LTPMCEXEC" ]; then
+    mkdir -p $LTPROOT/results/old/ || exit 1
+    mkdir -p $LTPROOT/output/old/ || exit 1
+    export MCEXEC_HOOK=${MCEXEC_HOOK:-${LTPROOT}/bin/mcexec_hook.sh}
+
+    _logfilename=test_realtime.log
+
+    # collect all logs into one.
+    export LOG_FILE=$LTPROOT/results/$_logfilename
+
+    pushd $LTPROOT/output || exit 1
+    for file in hangups runltp.restart runltp_restart_by_rc.sh.log ; do
+	if [ -f $file ]; then
+	    _mtime=`stat -c %y %file | awk '{print $1 "_" $2;}'`
+	    mv -f $file "old/$file.$_mtime" || exit 1
+	fi
+    done
+    popd
+
+    pushd $LTPROOT/results || exit 1
+    for file in $_logfilename ; do
+	if [ -f $file ]; then
+	    _mtime=`stat -c %y %file | awk '{print $1 "_" $2;}'`
+	    mv -f $file "old/$file.$_mtime" || exit 1
+	fi
+    done
+    popd
+fi
+
+
 if [ $# -lt 1 ]; then
 	usage
 fi

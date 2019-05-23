@@ -133,7 +133,7 @@ case $TEST_NUM in
 			cp memctl_test01 memctl_task_$i # 2>/dev/null;
 			chmod +x memctl_task_$i;
 			TEST_NUM=$TEST_NUM MYGROUP=$MYGROUP SCRIPT_PID=$SCRIPT_PID CHUNK_SIZE=$CHUNK_SIZE \
-				NUM_CHUNKS=$NUM_CHUNKS ./memctl_task_$i &
+				NUM_CHUNKS=$NUM_CHUNKS $LTPMCEXEC ./memctl_task_$i &
 			if [ $? -ne 0 ]
 			then
 				echo "Error: Could not run ./memctl_task_$i"

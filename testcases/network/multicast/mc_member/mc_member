@@ -58,17 +58,17 @@ do_test()
 		# Run setsockopt test with bogus network
 		get_address
 		tst_resm TINFO "Running mc_member_e on $ADDRESS"
-		mc_member_test -j -g $GLIST -s 30 -i $ADDRESS >/dev/null 2>&1
+		$LTPMCEXEC mc_member_test -j -g $GLIST -s 30 -i $ADDRESS >/dev/null 2>&1
 
 		# Run setsockopt/getsockopt test
-		mc_member_test -g $GLIST -s 80 -i $ipaddr > $ERRFILE 2>&1 &
+		$LTPMCEXEC mc_member_test -g $GLIST -s 80 -i $ipaddr > $ERRFILE 2>&1 &
 
 		# Join twice and leave once and see if the groups are still
 		# joined on all specified interfaces.
 		for agroup in `cat $GLIST`
 		do
 			tst_resm TINFO "Running (1st) member on $ipaddr"
-			mc_member_test -j -g $GLIST -s 30 -i $ipaddr \
+			$LTPMCEXEC mc_member_test -j -g $GLIST -s 30 -i $ipaddr \
 				       > $ERRFILE 2>&1 &
 			sleep 5
 			grep "cannot join group" $ERRFILE
@@ -78,7 +78,7 @@ do_test()
 			fi
 
 			tst_resm TINFO "Running (2nd) member on $ipaddr"
-			mc_member_test -g $GLIST -s 60 -i $ipaddr \
+			$LTPMCEXEC mc_member_test -g $GLIST -s 60 -i $ipaddr \
 				       > $ERRFILE 2>&1 &
 			sleep 5
 			grep "cannot join group" $ERRFILE
@@ -112,7 +112,7 @@ do_test()
 		# Test the membership boundaries
 		tst_resm TINFO "Running member on too many groups over "\
 			       "$ipaddr"
-		mc_member_test -j -g $TooManyGLIST -i $ipaddr \
+		$LTPMCEXEC mc_member_test -j -g $TooManyGLIST -i $ipaddr \
 			       > $ERRFILE 2>&1 &
 
 		count=`grep 105 $ERRFILE | wc -l`

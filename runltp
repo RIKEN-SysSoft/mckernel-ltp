@@ -450,6 +450,57 @@ main()
         esac
     done
 
+
+    ### setup for McKernel
+    if [ -n "${LTPMCEXEC}" -a -z "${RESTARTED_BY_RC}" ]; then
+	# starting new,
+	# move old logs and prepare for restarting.
+
+       	RESTART=${LTPROOT}/output/runltp.restart
+	_working_dir=`pwd`;
+
+	mkdir -p $LTPROOT/output/old || exit 1
+	pushd $LTPROOT/output || exit 1
+	for file in hangups runltp.restart runltp_restart_by_rc.sh.log ; do
+	    if [ -f $file ]; then
+		_mtime=`stat -c %y $file | awk '{print $1 "_" $2;}'`
+		mv -f $file "old/$file.$_mtime" || exit 1
+	    fi
+	done
+	for file in `ls LTP_RUN_ON-* 2>/dev/null`; do
+	    mv -f $file old/ || exit 1
+	done
+	popd
+
+	mkdir -p $LTPROOT/results/old || exit 1
+	pushd $LTPROOT/results || exit 1
+	for file in `ls LTP_RUN_ON-* 2>/dev/null`; do
+	    mv -f $file old/ || exit 1
+	done
+	popd
+
+	cat <<-EOF > ${RESTART} || exit 1;
+		#! /bin/sh
+		export PATH=${PATH}
+		export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+		export LTPMCEXEC=${LTPMCEXEC}
+		export MCEXEC_HOOK=${MCEXEC_HOOK}
+		export MCEXEC_TIMEOUT=${MCEXEC_TIMEOUT}
+		export MC_RESET_EACHTIME=${MC_RESET_EACHTIME}
+		export LTPROOT=${LTPROOT}
+		${LTPROOT}/bin/mc_start.sh || \\
+		    ${LTPROOT}/bin/mc_start.sh -r || \\
+		    exit 1
+
+		cd ${_working_dir}
+		export RESTARTED_BY_RC=1
+
+		$0 $*
+	EOF
+	chmod 0744 ${RESTART} || exit 1
+    fi
+
+
     ## It would be nice to create a default log file even if the user has not mentioned
     if [ ! "$LOGFILE" ]; then                                ## User has not mentioned about Log File name
        LOGFILE_NAME="$DEFAULT_FILE_NAME_GENERATION_TIME"
@@ -802,7 +853,51 @@ EOF
 	fi
     # Some tests need to run inside the "bin" directory.
     cd "${LTPROOT}/testcases/bin"
+
+
+    # wrapping for mcexec -- begin
+    if [ -z "${LTPMCEXEC}" ]; then
+	# this is original behavior.
+
     "${LTPROOT}/bin/ltp-pan" $QUIET_MODE $NO_KMSG -e -S $INSTANCES $DURATION -a $$ -n $$ $PRETTY_PRT -f ${TMP}/alltests $LOGFILE $OUTPUTFILE $FAILCMDFILE $TCONFCMDFILE
+
+    else 
+	export MCEXEC_HOOK=${MCEXEC_HOOK:-${LTPROOT}/bin/mcexec_hook.sh}
+	ORIG=${LTPROOT}/output/alltests.orig
+	RUNNING=${LTPROOT}/output/alltests.running
+	NEXT=${LTPROOT}/output/alltests.next
+	HANGUPS=${LTPROOT}/output/hangups
+
+	if [ -z "${RESTARTED_BY_RC}" ]; then
+	    # starting new
+	    rm -f ${HANGUPS}
+	    cp -f ${TMP}/alltests ${ORIG}
+	    sed -e "/^[ 	]*$/d" -e "/^[ 	]*#/d" ${ORIG} \
+		> ${RUNNING} || exit 1
+	    cp -f ${RUNNING} ${NEXT} || exit 1
+	else
+	    # resuming
+	    if [ ! -f "${NEXT}" ]; then
+		echo "ERROR: cannot restart, file not found: ${NEXT}"
+		exit 1;
+	    fi;
+	    num_next=`wc -l ${NEXT} | cut -d\  -f1`
+	    if [ "${num_next}" = "0" ]; then
+		echo "INFO: no more testcase to restart.";
+		tail -1 ${RUNNING} >> ${HANGUPS}
+		exit 0;
+	    fi;
+	    num_tmp=`expr ${num_next} + 1`
+	    last_running=`tail -${num_tmp} ${RUNNING} | head -1`
+	    echo "${last_running}" >> ${HANGUPS}
+	    cp -f ${NEXT} ${RUNNING} || exit 1
+	fi;
+
+	# ${NEXT} would be decremented one by one in ltp-pan.
+	"${LTPROOT}/bin/ltp-pan" $QUIET_MODE $NO_KMSG -e -S $INSTANCES $DURATION -a $$ -n $$ $PRETTY_PRT -f ${RUNNING} $LOGFILE $OUTPUTFILE $FAILCMDFILE $TCONFCMDFILE
+    fi
+    # wrapping for mcexec -- end
+
 
     if [ $? -eq 0 ]; then
       echo "INFO: ltp-pan reported all tests PASS"

@@ -44,13 +44,13 @@ capset02 capset02
 cacheflush01 cacheflush01
 
 chdir01 chdir01
-chdir01A symlink01 -T chdir01
+chdir01A $LTPMCEXEC symlink01 -T chdir01
 chdir02 chdir02
 chdir03 chdir03
 chdir04 chdir04
 
 chmod01 chmod01
-chmod01A symlink01 -T chmod01
+chmod01A $LTPMCEXEC symlink01 -T chmod01
 chmod02 chmod02
 chmod03 chmod03
 chmod04 chmod04
@@ -159,7 +159,7 @@ execve01 execve01
 execve02 execve02
 execve03 execve03
 execve04 execve04
-execve05 execve05 -i 5 -n 32
+execve05 $LTPMCEXEC execve05 -i 5 -n 32
 execvp01 execvp01
 execveat01 execveat01
 execveat02 execveat02
@@ -326,7 +326,7 @@ fork08 fork08
 fork09 fork09
 fork10 fork10
 fork11 fork11
-fork13 fork13 -i 1000000
+fork13 $LTPMCEXEC fork13 -i 1000000
 fork14 fork14
 
 fpathconf01 fpathconf01
@@ -380,8 +380,8 @@ getcwd04 getcwd04
 getdents01 getdents01
 getdents02 getdents02
 
-getdents01_64 getdents01 -l
-getdents02_64 getdents02 -l
+getdents01_64 $LTPMCEXEC getdents01 -l
+getdents02_64 $LTPMCEXEC getdents02 -l
 
 getdomainname01 getdomainname01
 
@@ -586,7 +586,7 @@ lchown03_16 lchown03_16
 lgetxattr01 lgetxattr01
 lgetxattr02 lgetxattr02
 
-link01 symlink01 -T link01
+link01 $LTPMCEXEC symlink01 -T link01
 link02 link02
 link03 link03
 link04 link04
@@ -620,8 +620,8 @@ lseek02 lseek02
 lseek07 lseek07
 lseek11 lseek11
 
-lstat01A symlink01 -T lstat01
-lstat01A_64 symlink01 -T lstat01_64
+lstat01A $LTPMCEXEC symlink01 -T lstat01
+lstat01A_64 $LTPMCEXEC symlink01 -T lstat01_64
 lstat01 lstat01
 lstat01_64 lstat01_64
 lstat02 lstat02
@@ -649,7 +649,7 @@ mkdir02 mkdir02
 mkdir03 mkdir03
 mkdir04 mkdir04
 mkdir05 mkdir05
-mkdir05A symlink01 -T mkdir05
+mkdir05A $LTPMCEXEC symlink01 -T mkdir05
 mkdir09 mkdir09
 
 #mkdirat test cases
@@ -672,14 +672,14 @@ mknodat02 mknodat02
 
 mlock01 mlock01
 mlock02 mlock02
-mlock03 mlock03 -i 20
+mlock03 $LTPMCEXEC mlock03 -i 20
 mlock04 mlock04
 
 mlock201 mlock201
 mlock202 mlock202
 mlock203 mlock203
 
-qmm01 mmap001 -m 1
+qmm01 $LTPMCEXEC mmap001 -m 1
 mmap01 mmap01
 mmap02 mmap02
 mmap03 mmap03
@@ -795,7 +795,7 @@ nice03 nice03
 nice04 nice04
 
 open01 open01
-open01A symlink01 -T open01
+open01A $LTPMCEXEC symlink01 -T open01
 open02 open02
 open03 open03
 open04 open04
@@ -885,10 +885,10 @@ preadv202_64 preadv202_64
 
 profil01 profil01
 
-process_vm_readv01 process_vm01 -r
+process_vm_readv01 $LTPMCEXEC process_vm01 -r
 process_vm_readv02 process_vm_readv02
 process_vm_readv03 process_vm_readv03
-process_vm_writev01 process_vm01 -w
+process_vm_writev01 $LTPMCEXEC process_vm01 -w
 process_vm_writev02 process_vm_writev02
 
 prot_hsymlinks prot_hsymlinks
@@ -947,7 +947,7 @@ readahead02 readahead02
 readdir01 readdir01
 readdir21 readdir21
 
-readlink01A symlink01 -T readlink01
+readlink01A $LTPMCEXEC symlink01 -T readlink01
 readlink01 readlink01
 readlink03 readlink03
 
@@ -979,7 +979,7 @@ removexattr01 removexattr01
 removexattr02 removexattr02
 
 rename01 rename01
-rename01A symlink01 -T rename01
+rename01A $LTPMCEXEC symlink01 -T rename01
 rename02 rename02
 rename03 rename03
 rename04 rename04
@@ -1009,7 +1009,7 @@ request_key05 request_key05
 rmdir01 rmdir01
 rmdir02 rmdir02
 rmdir03 rmdir03
-rmdir03A symlink01 -T rmdir03
+rmdir03A $LTPMCEXEC symlink01 -T rmdir03
 
 rt_sigaction01 rt_sigaction01
 rt_sigaction02 rt_sigaction02
@@ -1316,7 +1316,7 @@ socketpair02 socketpair02
 sockioctl01 sockioctl01
 
 splice01 splice01
-splice02 seq 1 20000 | splice02
+splice02 seq 1 20000 | $LTPMCEXEC splice02
 splice03 splice03
 splice04 splice04
 splice05 splice05
@@ -1330,8 +1330,8 @@ stat01 stat01
 stat01_64 stat01_64
 stat03 stat03
 stat03_64 stat03_64
-stat04 symlink01 -T stat04
-stat04_64 symlink01 -T stat04_64
+stat04 $LTPMCEXEC symlink01 -T stat04
+stat04_64 $LTPMCEXEC symlink01 -T stat04_64
 
 statfs01 statfs01
 statfs01_64 statfs01_64
@@ -1453,7 +1453,7 @@ uname02 uname02
 uname03 uname03
 uname04 uname04
 
-unlink01 symlink01 -T unlink01
+unlink01 $LTPMCEXEC symlink01 -T unlink01
 unlink05 unlink05
 unlink07 unlink07
 unlink08 unlink08
@@ -1483,7 +1483,7 @@ ustat01 ustat01
 ustat02 ustat02
 
 utime01 utime01
-utime01A symlink01 -T utime01
+utime01A $LTPMCEXEC symlink01 -T utime01
 utime02 utime02
 utime03 utime03
 utime04 utime04

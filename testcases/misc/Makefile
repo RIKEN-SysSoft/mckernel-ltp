@@ -24,4 +24,11 @@
 top_srcdir		?= ../..
 
 include $(top_srcdir)/include/mk/env_pre.mk
+
+# MCKERNEL:
+# Exlcude tcore_patch_test_suites that causes build error.
+ifneq ($(HOSTCC),)
+FILTER_OUT_DIRS		+= tcore_patch_test_suites
+endif
+
 include $(top_srcdir)/include/mk/generic_trunk_target.mk

@@ -25,6 +25,14 @@ top_srcdir		?= ..
 include $(top_srcdir)/include/mk/env_pre.mk
 include $(top_srcdir)/include/mk/functions.mk
 
+# MCKERNEL:
+# Build host tools with a host compiler
+ifneq ($(HOSTCC),)
+CC			:= $(HOSTCC)
+CFLAGS			:= $(HOSTCFLAGS)
+LDFLAGS			:= $(HOSTLDFLAGS)
+endif
+
 # XXX (garrcoop): some versions of flex/bison generate crap code that doesn't
 # check the return code from fwrite(3).
 CPPFLAGS		+= -Wno-error

@@ -1,5 +1,10 @@
 #!/bin/sh
 
+
+### This test needs Python, skip if LTPMCEXEC is set.
+[ -n "$LTPMCEXEC" ] && exit 0
+
+
 profile=${1:-default}
 
 cd $(dirname $0) # Move to test directory

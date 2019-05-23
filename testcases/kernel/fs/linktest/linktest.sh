@@ -17,6 +17,10 @@
 #   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 
+### this testcase has no program to run on McKernel.
+[ -n "$LTPMCEXEC" ] && exit 0
+
+
 #
 #  FILE(s)     : linktest.sh README
 #  DESCRIPTION : Regression test for max links per file

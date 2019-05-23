@@ -67,7 +67,7 @@ do_syscall_test()
 		tst_resm TFAIL "set $TEST_CPUSET/cpuset.mems as $2 fail."
 		return 1
 	fi
-	cpuset_syscall_test $3 >"$TEST_OUTPUT" &
+	$LTPMCEXEC cpuset_syscall_test $3 >"$TEST_OUTPUT" &
 	testpid=$!
 	echo $testpid > "$TEST_CPUSET/tasks"
 	if [ $? -ne 0 ]; then

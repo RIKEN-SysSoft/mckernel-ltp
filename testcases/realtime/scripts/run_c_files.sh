@@ -48,7 +48,13 @@ do
 				echo "--- Running testcase $cmd $params ---"
 				date
 				echo "Logging to $LOG_FILE"
-				eval ./$cmd 2>&1 $params
+
+				if [ -z "$LTPMCEXEC" -o -z "$MCEXEC_HOOK" ]; then
+				    eval ./$cmd 2>&1 $params
+				else
+				    eval $MCEXEC_HOOK "'$LTPMCEXEC ./$cmd 2>&1 $params'"
+				fi
+
 				echo
 				date
 				echo "The $cmd test appears to have completed."

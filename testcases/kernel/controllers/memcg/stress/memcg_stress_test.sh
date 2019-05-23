@@ -31,7 +31,7 @@ setup()
 	sleep 2
 	local mem_free=`cat /proc/meminfo | grep MemFree | awk '{ print $2 }'`
 	local swap_free=`cat /proc/meminfo | grep SwapFree | awk '{ print $2 }'`
-	local pgsize=`tst_getconf PAGESIZE`
+	local pgsize=`$LTPMCEXEC tst_getconf PAGESIZE`
 
 	MEM=$(( $mem_free + $swap_free / 2 ))
 	MEM=$(( $MEM / 1024 ))
@@ -76,7 +76,7 @@ run_stress()
 	tst_res TINFO "Starting cgroups"
 	for i in $(seq 0 $(($cgroups-1))); do
 		mkdir /dev/memcg/$i 2> /dev/null
-		memcg_process_stress $mem_size $interval &
+		$LTPMCEXEC memcg_process_stress $mem_size $interval &
 		echo $! > /dev/memcg/$i/tasks
 		pids="$! $pids"
 	done

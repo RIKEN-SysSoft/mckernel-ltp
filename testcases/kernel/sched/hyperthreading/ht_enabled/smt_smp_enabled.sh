@@ -35,7 +35,7 @@ RC=0
 # check for SMT/SMP System
 tst_resm TINFO "Begin: SMT/SMP Enabled"
 if [ -f ./ht_enabled ];then
-	./ht_enabled
+	$LTPMCEXEC ./ht_enabled
 	ret_value=$?
 
 	if [ $ret_value -ne 0 ];then

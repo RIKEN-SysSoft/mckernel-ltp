@@ -1,0 +1,5 @@
+#! /bin/sh
+
+RESTART=__LTPROOT__/bin/runltp_restart_by_rc.sh
+[ -f "${RESTART}" ] && ${RESTART}
+

@@ -1,0 +1,246 @@
+システムソフトウェア機能検証 ユーザマニュアル
+
+							2013/11/29
+							SOUM Corporation
+
+1. はじめに
+===========
+
+本書は、システムソフトウェア機能検証において作成・改修したプログラム LTP の
+使用方法について記載した、ユーザマニュアルです。
+
+本書では、LTP がインストールされたディレクトリを $LTPROOT と表記します。
+
+
+2. 基本環境設定
+===============
+
+ 1) LTP がインストールされたホストで McKernel が動作するように環境を構築して
+    ください。手順については、McKernel のドキュメントを参照してください。
+
+ 2) McKernel を起動・再起動するスクリプトが $LTPROOT/bin/mc_start.sh にありま
+    す。このスクリプトは LTP のテスト中、McKernel のリセットに使用されます。
+    内容を確認の上、必要であれば調整を行ってください。
+
+    * 調整する場合、引数なしでの実行時に McKernel を起動、引数 -r で実行した
+      場合に McKernel を再起動するように調整してください。
+
+ 3) mcexec でテストプログラムを実行した際、タイムアウト (ハングアップ) を検知
+    して強制終了させるスクリプトが $LTPROOT/bin/mcexec_hook.sh にあります。
+    内容を確認の上、必要であれば調整を行ってください。
+
+    * テストプログラムの実行はサブスクリプト $LTPROOT/bin/mcexec_hook_sub.sh
+      から行われます。mcexec の実行前準備などは、こちらに記述した方がよいです。
+      (本書作成時点では、sync を 3 回実行しています)
+
+    * タイムアウト検知には timeout コマンドを利用しています。ただし、McKernel
+      がハングアップした際に timeout コマンド自体が無反応になる事象が確認され
+      ており、その場合のバックアップ処置 (スクリプト内の __bommer) を組み込ん
+      であります。
+      本書作成時点では、このバックアップ処置が動作した場合に、ほぼ確実にホス
+      ト OS がハングアップ (10分くらい後に再起動) します。
+
+
+3. LTP の実行
+=============
+
+LTP を実行する前に、以下の内容を確認・検討してください。
+
+ a) 実施するテストケース
+
+    a-1) LTP 標準テストスーツ
+    	 $LTPROOT/runtest/ 配下にあるテストケース定義ファイル群の中から実施す
+    	 るものを選択してください。ただし、network 系テスト用のテストケースファ
+    	 イルや、実行できない定義ファイルなども混じっているため、注意が必要で
+    	 す。
+
+	 * McKernel 上で動作する（動作させて意味のある）テストケース群は以下
+	   のとおりです。
+	   syscalls, fs, fs_perms_simple, fsx,dio, mm, ipc, sched, math,
+	   nptl, pty, containers, controllers, filecaps, cap_bounds,
+	   fcntl-locktests, connectors, timers, numa, hugetlb, io_cd,ima,
+	   hyperthreading, kernel_misc, test_dma_thread_diotest7,
+	   securebits, stress.part1
+
+	 なお、実行するテストケースを細かく調整したい場合には、自分で
+	 テストケースの定義ファイルを作成しても構いません。ただし、作
+	 成する場合は $LTPROOT/runtest/ 配下に配置する必要があります。
+
+    a-2) network 系テストスーツ
+    	 $LTPROOT/testscripts/networktest.sh -h を実行すると選択可能な
+    	 テストグループが表示されますので、実施するテストグループを選
+    	 択してください。
+
+    a-3) OpenPosix 系テストスーツ
+    	 $LTPROOT/bin/run-posix-option-group-test.sh を実行すると選択
+    	 可能なテストグループが表示されますので、実施するテストグルー
+    	 プを選択してください。
+
+    a-4) realtime 系テストスーツ
+    	 $LTPROOT/testscripts/test_realtime.sh -t list を実行すると選
+    	 択可能なテストグループが表示されますので、実施するテストグルー
+    	 プを選択してください。
+
+ b) mcexec の絶対パス
+
+ c) タイムアウト秒数
+    テストプログラムが何秒の間に完了しなければハングアップとして扱うか、です。
+    テストによっては長時間を要するものがあるかもしれませんので、短かすぎる値
+    は避けるべきですが、長すぎるとハングアップの検知も遅れてしまいます。
+    (デフォルト値は 300 秒としてありますが、根拠のある数値ではありません)
+
+ d) McKernel のリセット頻度
+    デフォルトの挙動としては、テストプログラムがタイムアウトした場合にのみ
+    McKernel のリセット処理を行っています。このリセット処理を、テストケースの
+    それぞれで毎回実施するか否かを検討してください。
+
+      * テストプログラムが SIGSEGV でクラッシュした場合に、mcexec が
+        "Terminated by signal 11" をエラー表示して返り値 0 で終了することがあ
+        ります。この場合、クラッシュした当該テストの結果は PASS となり、次の
+        テストケースで mcexec がタイムアウトすることが多いです。
+
+	このようなテストケースを扱う場合には、テストケースごとに毎回リセット
+        した方が確実なテストになります。
+	一方、SIGSEGV でクラッシュするようなことが無いと分かっている場合には、
+	リセットする頻度を減らすことでテスト時間を短縮することができます。
+
+ e) リモートノード
+    network 系テストスーツを実施する場合、リモートノードと、リモートノードへ
+    のアクセス手段を rsh あるいは ssh から選択してください。
+
+    リモートノードには、ローカルノードと同じ構成で LTP がインストールされてい
+    る必要があります。
+
+上記の検討結果を踏まえ、LTP を実行します。
+
+ 1) $LTPROOT に移動します。
+
+    以下のいずれかの実行コマンドを、root 権限で実行します。
+    このとき、以下の環境変数を設定してください。
+
+      - LTPMCEXEC
+      	b) で確認した mcexec の絶対パス。
+
+      - MCEXEC_TIMEOUT
+      	c) で検討したタイムアウト秒数。未指定の場合は 300 秒。
+
+      - MC_RESET_EACHTIME
+      	d) で検討した McKernel リセット頻度。1 を設定すると、テストケースごと
+      	に毎回リセットする。未設定にすると、タイムアウトした場合にのみリセッ
+      	トする。
+
+      - RHOST
+      	e) で決定したリモートノード。network 系テストスーツでのみ有効。
+
+      - RSH
+      	e) で選択した rsh あるいは ssh。network 系テストスーツでのみ有効。
+
+      * sudo を使う場合、環境変数の継承に留意してください。上記のように env
+        コマンドを使用して明示するか、sudo -s で root ユーザにスイッチした上
+        で export LTPMCEXEC=... などを実行してください。
+
+ 2) LTP 標準テストスーツの場合、runltp に -f オプションでテストケース定義ファ
+    イルを指定して実行します。
+
+    実行例:
+    $LTPROOT/runtest/syscalls と $LTPROOT/runtest/fs のテストを実行する場合
+
+    kncc15$ cd /other/ltp
+    kncc15$ sudo env LTPMCEXEC=/opt/ppos/bin/mcexec MCEXEC_TIMEOUT=300 \
+    MC_RESET_EACHTIME=0 ./runltp -f syscalls,fs
+
+      * a) で検討したテストケースのリストファイルを -f オプションで指定します。
+        複数を選択した場合にはカンマで区切って列挙します。
+
+ 3) network 系テストスーツの場合、testscripts/networktests.sh にテストケース
+    を示すオプションを指定して実行します。
+
+    実行例:
+    リモートノードに kncc18 を使用し、network 系テスト全てを実行する場合
+
+    kncc15$ cd /other/ltp
+    kncc15$ sudo env LTPMCEXEC=/opt/ppos/bin/mcexec MCEXEC_TIMEOUT=300 \
+    MC_RESET_EACHTIME=0 RSH=ssh RHOST=kncc18 \
+    ./testscripts/networktests.sh -w
+
+
+ 4) OpenPosix 系テストスーツの場合、bin/run-posix-option-group-test.sh に実行
+    するテストグループを引数で指定して実行します。
+
+    実行例:
+    テストグループ MSG を実行する場合
+
+    kncc15$ cd /other/ltp
+    kncc15$ sudo env LTPMCEXEC=/opt/ppos/bin/mcexec MCEXEC_TIMEOUT=300 \
+    MC_RESET_EACHTIME=0 bin/run-posix-option-group-test.sh MSG
+
+ 5) realtime 系テストスーツの場合、testscripts/test_realtime.sh の -t オプショ
+    ンに実行するテストグループを指定して実行します。
+
+    実行例:
+    テストグループ func/prio-wake を実行する場合
+
+    kncc15$ cd /other/ltp
+    kncc15$ sudo env LTPMCEXEC=/opt/ppos/bin/mcexec MCEXEC_TIMEOUT=300 \
+    MC_RESET_EACHTIME=0 testscripts/test_realtime.sh -t func/prio-wake
+
+
+4. テスト結果
+=================
+
+ 1) LTP 標準テストスーツの場合
+
+    - $LTPROOT/results/LTP_RUN_ON_<日付>-<時刻>.log
+      テストスーツ実行結果のサマリーです。テスト中にホスト OS が再起動された
+      場合には複数のファイルに分割されてしまう点に留意してください。
+
+      * テストプログラムが SIGSEGV でクラッシュした場合、mcexec が返り値 0 で
+        終了するため、テスト結果としては PASS (Exit Value = 0) となります。
+
+      * Exit Value = 124 は timeout コマンドがタイムアウトしたことを意味しま
+        す。基本的にはハングアップしたと判断できますが、設定したタイムアウト
+        時間が短かすぎる可能性もあります。
+
+    - $LTPROOT/output/hangups
+      テスト実行中にホスト OS が再起動された場合、最後に実行していたテストケー
+      スがこのファイルに追記されます。
+
+      * 多くの場合、以下の流れで発生します。
+      	1. McKernel がハングアップ。
+	2. timeout コマンドも正常に終了できない。
+	3. バックアップ処置 (__bommer) が McKernel をリセット。
+	4. McKernel のリセット中にエラー。
+	   (rmmod ihk.ko で ERROR: Module ihk is in use)
+	5. ホスト OS が無反応 (おそらく panic) になる。
+	6. 10分程度後にホスト OS が自動的に再起動される。
+	7. 再起動時の LTP 再実行で、最後に実行していたテストケースを記録。
+
+ 2) network 系テストスーツの場合
+
+    - $LTPROOT/results/netpan.log
+      テストケースそれぞれの実行結果です。内部的には LTP 標準テストスーツと同
+      じツール（ltp-pan）を利用していますが、network 系テストのテスト結果では
+      pretty print オプションを指定しておらず、読みにくい出力になっています。
+
+      また、テストが FAIL した場合でも終了ステータスとして 0 を返す場合が多く、
+      netpan.log だけでは成否を判断できない場合が多いです。
+
+      * tag がテストケース名、stat が終了ステータスです。
+       	stat=124 の場合はタイムアウトした可能性を考慮に入れるべきです。
+
+    - $LTPROOT/output/hangups
+      テスト実行中にホスト OS が再起動された場合、最後に実行していたテストケー
+      スがこのファイルに追記されます。
+
+ 3) OpenPosix 系テストスーツの場合、
+
+    - $LTPROOT/results/posix-test.log
+      テストケースごとの実行結果が出力されます。
+
+ 4) realtime 系テストスーツの場合、
+
+    - $LTPROOT/results/test_realtime.log
+      テスト結果のサマリーではなく、テスト実行中のログがそのまま出力されます。
+
+
+以上

@@ -26,6 +26,12 @@
 #
 # Robbie Williamson (robbiew@us.ibm.com)
 
+### skip if $LTPMCEXEC is set.
+if [ -n "$LTPMCEXEC" ]; then
+    echo "This test has no program to run on McKernel."
+    exit 0
+fi
+
 TCID=mc_cmds
 TST_TOTAL=1
 

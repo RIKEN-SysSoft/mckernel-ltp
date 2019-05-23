@@ -34,7 +34,7 @@ dev=`df -P . | sed '1d' | cut -d' ' -f1 | sed 's/[p]*[0-9]*$//'`
 
 # evaluate device bandwidth
 export MYGROUP=
-phys_bw=`./iobw -direct 1 $BUFSIZE $DATASIZE | grep TOTAL | awk '{print $7}'`
+phys_bw=`$LTPMCEXEC ./iobw -direct 1 $BUFSIZE $DATASIZE | grep TOTAL | awk '{print $7}'`
 if [ $? -ne 0 ]; then
 	echo "ERROR: could not evaluate i/o bandwidth of $dev. Exiting test."
 	cleanup
@@ -93,7 +93,7 @@ for strategy in 0 1; do
 			exit 1
 		fi
 		# exec i/o benchmark
-		./iobw -direct $tasks $BUFSIZE $DATASIZE > /tmp/$MYGROUP.out &
+		$LTPMCEXEC ./iobw -direct $tasks $BUFSIZE $DATASIZE > /tmp/$MYGROUP.out &
 		PID[$i]=$!
 	done
 	/bin/echo $$ > /dev/blockioctl/tasks

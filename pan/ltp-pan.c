@@ -1025,6 +1025,53 @@ run_child(struct coll_entry *colle, struct tag_pgrp *active, int quiet_mode,
 				exit(2);
 			}
 		}
+
+#ifdef MCEXEC_ENABLED
+#ifndef ARG_MAX
+#define ARG_MAX (4096)
+#endif /*ARG_MAX*/
+		const char *ltproot = getenv("LTPROOT");
+		const char *mcexec  = getenv("LTPMCEXEC");
+		const char *mc_hook = getenv("MCEXEC_HOOK");
+		const char *dec_case = "dec_testcases.sh";
+		
+		if (mcexec && ltproot && mc_hook) {
+		    char _mc_cmdline [ARG_MAX+1];
+
+		    /* prepare for the case mckernel hangs-up.
+		     * dec_testcase.sh deletes specified testcase from
+		     * the testcase list used by runltp.restart.
+		     */
+		    if (snprintf(_mc_cmdline, ARG_MAX, "%s/bin/%s '%s'", 
+			    ltproot, dec_case, c_cmdline) < 0) {
+			fprintf(stderr, "invalid LTPROOT: %s\n", ltproot);
+			exit(errno);
+		    }
+		    if (system(_mc_cmdline) != 0) {
+			fprintf(stderr, 
+			    "%s: testcase decrement failed.\n", dec_case);
+			exit(EXIT_FAILURE);
+		    }
+
+		    /* exec testcase with $MCEXEC_HOOK shell script which
+		     * controls preparing mckernel, timeout and resetting
+		     * mckernel when it hangs-up.
+		     */
+		    if (snprintf(_mc_cmdline, ARG_MAX, "%s '%s'",
+			    mc_hook, c_cmdline) < 0) {
+			fprintf(stderr, "invalid MCEXEC_HOOK: %s\n", mc_hook);
+			exit(errno);
+		    }
+	    
+		    execlp("sh", "sh", "-c", _mc_cmdline, (char *)0);
+		    errlen = sprintf(errbuf,
+    			"pan(%s): execlp of '%s' (tag %s) failed.  errno:%d %s",
+			panname, c_cmdline, colle->name, errno,
+			strerror(errno));
+		}
+		/* go ahead with default behavior. */
+#endif/*MCEXEC_ENABLED*/
+
 		/* If there are any shell-type characters in the cmdline
 		 * such as '>', '<', '$', '|', etc, then we exec a shell and
 		 * run the cmd under a shell.

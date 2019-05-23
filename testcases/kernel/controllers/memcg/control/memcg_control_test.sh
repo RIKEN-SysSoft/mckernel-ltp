@@ -41,7 +41,7 @@ export TST_COUNT=0
 export TMP=${TMP:-/tmp}
 cd $TMP
 
-PAGE_SIZE=$(tst_getconf PAGESIZE)
+PAGE_SIZE=$($LTPMCEXEC tst_getconf PAGESIZE)
 
 TOT_MEM_LIMIT=$PAGE_SIZE
 ACTIVE_MEM_LIMIT=$PAGE_SIZE
@@ -56,9 +56,7 @@ FAIL=1
 # Check if the test process is killed on crossing boundary
 test_proc_kill()
 {
-	cd $TMP
-	mem_process -m $PROC_MEM &
-	cd $OLDPWD
+	( cd $TMP && $LTPMCEXEC mem_process -m $PROC_MEM & )
 	sleep 1
 	echo $! > tasks
 

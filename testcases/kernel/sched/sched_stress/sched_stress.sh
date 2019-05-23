@@ -30,6 +30,6 @@ export KERNEL=./sched_datafile
 touch $KERNEL
 echo 0.000000 > sch.measure
 export RAWDEV=`df / | grep dev | awk {'print $1'}`
-sched_driver -s 0.9 -t 0.02 -p 2 > /tmp/tmp$$
+$LTPMCEXEC sched_driver -s 0.9 -t 0.02 -p 2 > /tmp/tmp$$
 tail -n 5 /tmp/tmp$$
 rm -rf /tmp/tmp$$ ./sched_datafile sch.measure

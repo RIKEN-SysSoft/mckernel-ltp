@@ -26,7 +26,7 @@
 mkdir memcg/0
 echo $$ > memcg/0/tasks
 
-./memcg_test_4 &
+$LTPMCEXEC ./memcg_test_4 &
 pid=$!
 sleep 1
 

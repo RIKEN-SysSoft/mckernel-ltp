@@ -1,0 +1,135 @@
+システムソフトウェア機能検証 インストレーションマニュアル
+
+							2013/11/29
+							SOUM Corporation
+
+1. はじめに
+===========
+
+本書は、システムソフトウェア機能検証において作成・改修したプログラム LTP の
+インストール方法について記載した、インストレーションマニュアルです。
+
+
+2. 基本環境構築
+===============
+
+はじめに、LTP を動作させる環境で McKernel が動作するように環境構築を行ってく
+ださい。また、C 言語で書かれたソースコードを McKernel 用にコンパイルできるよ
+うに、コンパイル環境の構築を行ってください。
+
+それぞれの手順については、McKernel およびコンパイラのドキュメントを参照してく
+ださい。
+
+参考情報として、本件作業で McKernel の環境構築で実施した内容を以下に記します。
+(手順が古い可能性がありますので、最新の情報を確認してください)
+
+  kncc-login1$ cd ~/work
+  kncc-login1$ git clone postpeta@postpeta.pccluster.org:ihk
+  kncc-login1$ git clone postpeta@postpeta.pccluster.org:mckernel
+  kncc-login1$ git clone postpeta@postpeta.pccluster.org:glibc
+  kncc-login1$ ssh kncc18
+  kncc18$ export PATH=$PATH:/usr/linux-k1om-4.7/bin
+  kncc18$ cd ~/work
+  kncc18$ cd ihk
+  kncc18$ ./configure
+  kncc18$ make
+  kncc18$ sudo make install
+  kncc18$ cd ../mckernel
+  kncc18$ ./configure
+  kncc18$ make
+  kncc18$ sudo make install
+  kncc18$ sudo mkdir -p /opt/ppos/attached/lib
+  kncc18$ (cd /opt/ppos/attached/lib; \
+  > (cd ../glibc/build; tar cf - libc.{a,so,so.6}) | tar xpf -)
+
+
+3. LTP のソースインストール
+===========================
+
+本節では、LTP をソースからコンパイルしてインストールする手順を説明します。
+
+ 1) 必要であれば、McKernel 用のコンパイルに使用するコンパイラのセットアップを
+    行います。
+
+      kncc18$ . /opt/intel/bin/compilervars.sh intel64
+
+ 2) LTP のソースアーカイブ (ltp.tar.gz あるいは類似の名称) を、インストール対
+    象環境の作業ディレクトリに展開します。
+
+      (1 に続いて)
+      kncc18$ cd ~/work
+      kncc18$ tar zxf /path/to/ltp.tar.gz
+
+ 3) 展開したソースディレクトリに移動し、configure を実行します。
+
+      (2 に続いて)
+      kncc18$ cd ltp
+      kncc18$ ./configure --prefix=/other/ltp \
+      > --with-open-posix-testsuite \
+      > --with-realtime-testsuite \
+      > CC="icc -mmic" LDFLAGS="-Wl,-rpath=/opt/ppos/attached/lib" \
+      > HOSTCC="gcc -DMCEXEC_ENABLED" --host=x86_64-unknown-linux-gnu
+
+      * prefix は LTP のインストール先ディレクトリです。このディレクトリは、
+        ユーザマニュアルや各種シェルスクリプトで $LTPROOT と表記されます。
+	prefix オプションを指定しなかった場合は /opt/ltp が適用されます。
+
+      * インストールされた LTP を、後から異なるパスに移動させることは、なるべ
+        く避けてください。
+	(移動させても動作するかもしれませんが、保証はできません)
+
+      * CC は McKernel 向けのコンパイラ、HOSTCC はホスト OS 向けのコンパイラ
+        です。ホスト OS 上で実行されるツールには、テストプログラムを McKernel
+        上で動作させるための調整が施してあり、-DMCEXEC_ENABLED をコンパイルオ
+        プションに加えることにより有効化されます。
+
+ 4) コンパイル・インストールを実行します。
+
+      (3 に続いて)
+      kncc18$ make
+      kncc18$ sudo make install
+
+      * インストール先 $LTPROOT が一般ユーザで書き込み可能な場合は、sudo を使
+        わなくても構いません。ただし、LTP を実行する際には (一部の例外を除き)
+        root 権限が必要となる点に留意してください。
+
+      * LTP のインストール先ディレクトリは、テストを実行すると一時ファイルな
+        どが大量に生成されます。クリーンな状態に戻したい場合に備えて、ソース
+        ディレクトリを残しておくか、インストール先のアーカイブを取っておくと
+        よいかもしれません。
+
+ 5) 依存ライブラリをコピーします。
+
+      (4 に続いて)
+      kncc18$ cd /opt/ppos/attached/lib
+      kncc18$ for lib in libdl.so.2 libm.so.6 libpthread.so.0 librt.so.1
+      > do
+      > cp /usr/linux-k1om-4.7/linux-k1om/lib64/$lib .
+      > done
+      kncc18$ cp /usr/linux-k1om-4.7/x86_64-k1om-linux/lib64/libgcc_s.so.1 .
+
+ 6) 必要であれば、ホスト OS リブート時の自動再開機能を設定します。
+
+      (5 に続いて)
+      kncc18$ cd /other/ltp  (prefix で指定したパス)
+      kncc18$ sudo cp bin/S99restart_ltp /etc/rc.d/rc3.d/
+
+      * S99restart_ltp には、$LTPROOT/bin/runltp_restart_by_rc.sh に相当する
+        パスが埋め込まれており、$LTPROOT の部分は configure で指定した
+	prefix の値に展開されているはずです。念のため、確認してください。
+
+
+4. LTP のバイナリインストール
+=============================
+
+本書作成時点では LTP はパッケージ化されておらず、依存関係を自動的に解決する仕
+組みなどはありません。
+
+ * ソースからインストールした LTP をコピーし、別ホストの同じパスに展開すれば
+   動作するはずです。依存ライブラリが不足するような場合には、コピー先ホストに
+   不足しているライブラリをインストールしてください。
+
+ * 少なくとも 3. の 5) でコピーしているライブラリは必要です。
+
+
+以上

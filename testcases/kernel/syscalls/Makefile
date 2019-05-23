@@ -45,4 +45,10 @@ FILTER_OUT_DIRS	+= \
 	setdomainname sethostname symlinkat ulimit ustat vfork vhangup vmsplice
 endif
 
+# MCKERNEL:
+# Exclude cacheflush that causes build error.
+ifneq ($(HOSTCC),)
+FILTER_OUT_DIRS	+= cacheflush
+endif
+
 include $(top_srcdir)/include/mk/generic_trunk_target.mk

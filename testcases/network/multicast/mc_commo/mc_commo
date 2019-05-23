@@ -49,7 +49,7 @@ do_test()
 	# Run setsockopt/getsockopt test
 	# Start up the recv on local host
 	tst_resm TINFO "Start mc_recv $GROUP_ADDR $(tst_ipaddr) $PORT"
-	mc_recv $GROUP_ADDR $(tst_ipaddr) $PORT >> $OUTFILE &
+	$LTPMCEXEC mc_recv $GROUP_ADDR $(tst_ipaddr) $PORT >> $OUTFILE &
 	SERVER_PID=$!
 	sleep 5
 	pgrep -x mc_recv > /dev/null || \
@@ -64,7 +64,7 @@ do_test()
 	tst_resm TINFO "Start on $RHOST mc_send $GROUP_ADDR" \
 	               "$(tst_ipaddr rhost) $PORT $TTL"
 
-	tst_rhost_run -b -c "mc_send $GROUP_ADDR $(tst_ipaddr rhost) $PORT $TTL"
+	tst_rhost_run -b -c "$LTPMCEXEC mc_send $GROUP_ADDR $(tst_ipaddr rhost) $PORT $TTL"
 	sleep 10
 	tst_rhost_run -s -c "pgrep -x mc_send > /dev/null"
 

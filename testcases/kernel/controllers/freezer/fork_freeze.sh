@@ -35,7 +35,7 @@ export TCID TST_COUNT TST_TOTAL
 running_cgroup_test
 mount_freezer && {
 make_sample_cgroup && {
-start_sample_proc "${CGROUPS_TESTROOT}/timed_forkbomb" 4 && {
+start_sample_proc "$LTPMCEXEC ${CGROUPS_TESTROOT}/timed_forkbomb" 4 && {
 
 while /bin/true ; do
 	trap 'break' ERR

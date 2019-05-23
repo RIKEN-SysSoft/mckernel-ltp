@@ -33,7 +33,7 @@ do_cleanup()
 do_setup()
 {
 	tst_resm TINFO "start rpc_server"
-	rpc_server
+	$LTPMCEXEC rpc_server
 
 	tst_resm TINFO "wait for server to be registered"
 	for i in $(seq 1 30); do
@@ -51,7 +51,7 @@ do_test()
 	local cnt=1
 	while [ $cnt -le $NUMLOOPS ]; do
 		for f in $DATAFILES; do
-			EXPECT_RHOST_PASS rpc1 -s $thost -f $LTP_DATAROOT/$f
+			EXPECT_RHOST_PASS $LTPMCEXEC rpc1 -s $thost -f $LTP_DATAROOT/$f
 		done
 		cnt=$(($cnt + 1))
 	done

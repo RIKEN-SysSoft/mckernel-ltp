@@ -55,12 +55,12 @@ run_case()
 	log="$LTPROOT/output/log"
 	mkdir -p $log 2> /dev/null
 
-	pec_listener > "$log/listener_$1.log" 2>&1 &
+	$LTPMCEXEC pec_listener > "$log/listener_$1.log" 2>&1 &
 	pid=$!
 	# Wait for pec_listener to start listening
 	sleep $((1*NUM_EVENTS))
 
-	event_generator -e $2 > "$log/generator_$1.log"
+	$LTPMCEXEC event_generator -e $2 > "$log/generator_$1.log"
 	ret1=$?
 
 	# Sleep until pec_listener has seen and handled all of

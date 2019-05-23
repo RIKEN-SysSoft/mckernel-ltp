@@ -24,7 +24,7 @@ TST_USE_LEGACY_API=1
 do_setup()
 {
 	tst_resm TINFO "Checking for rstatd on $(tst_ipaddr)"
-	rpcinfo -u $(tst_ipaddr) rstatd 3 > /dev/null 2>&1 || \
+	$LTPMCEXEC rpcinfo -u $(tst_ipaddr) rstatd 3 > /dev/null 2>&1 || \
 		tst_brkm TCONF "rstatd is inactive on $(tst_ipaddr)"
 }
 
@@ -32,16 +32,16 @@ do_test()
 {
 	tst_resm TINFO "Test rup with options set"
 
-	EXPECT_RHOST_PASS rup $(tst_ipaddr)
+	EXPECT_RHOST_PASS $LTPMCEXEC rup $(tst_ipaddr)
 
 	local opts="-d -h -l -t"
 	for opt in $opts; do
-		EXPECT_RHOST_PASS rup $opt $(tst_ipaddr)
+		EXPECT_RHOST_PASS $LTPMCEXEC rup $opt $(tst_ipaddr)
 	done
 
 	tst_resm TINFO "Test rup with bad options"
-	EXPECT_RHOST_FAIL rup bogushost
-	EXPECT_RHOST_FAIL rup -bogusflag $(tst_ipaddr)
+	EXPECT_RHOST_FAIL $LTPMCEXEC rup bogushost
+	EXPECT_RHOST_FAIL $LTPMCEXEC rup -bogusflag $(tst_ipaddr)
 }
 
 do_setup

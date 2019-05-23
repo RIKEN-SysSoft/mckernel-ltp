@@ -73,7 +73,7 @@ check_for_support_numa()
 setup()
 {
 	export MB=$((1024*1024))
-	export PAGE_SIZE=$(tst_getconf PAGESIZE)
+	export PAGE_SIZE=$($LTPMCEXEC tst_getconf PAGESIZE)
 	export HPAGE_SIZE=$(awk '/Hugepagesize:/ {print $2}' /proc/meminfo)
 
 	total_nodes=0
@@ -96,7 +96,7 @@ test1()
 	Mem_curr=0
 
 	for node in $nodes_list; do
-		numactl --cpunodebind=$node --membind=$node support_numa alloc_1MB &
+		numactl --cpunodebind=$node --membind=$node $LTPMCEXEC support_numa alloc_1MB &
 		pid=$!
 
 		TST_RETRY_FUNC "check_for_support_numa $pid" 0
@@ -130,7 +130,7 @@ test2()
 			Preferred_node=$(echo $nodes_list | cut -d ' ' -f $((COUNTER+1)))
 		fi
 
-		numactl --cpunodebind=$node --preferred=$Preferred_node support_numa alloc_1MB &
+		numactl --cpunodebind=$node --preferred=$Preferred_node $LTPMCEXEC support_numa alloc_1MB &
 		pid=$!
 
 		TST_RETRY_FUNC "check_for_support_numa $pid" 0
@@ -157,7 +157,7 @@ test3()
 	# Memory will be allocated using round robin on nodes.
 	Exp_incr=$(echo "$MB / $total_nodes" |bc)
 
-	numactl --interleave=all support_numa alloc_1MB &
+	numactl --interleave=all $LTPMCEXEC support_numa alloc_1MB &
 	pid=$!
 
 	TST_RETRY_FUNC "check_for_support_numa $pid" 0
@@ -187,7 +187,7 @@ test4()
 	no_of_cpus=$(tst_ncpus)
 	# not sure whether cpu's can't be in odd number
 	run_on_cpu=$(($((no_of_cpus+1))/2))
-	numactl --physcpubind=$run_on_cpu support_numa pause & #just waits for sigint
+	numactl --physcpubind=$run_on_cpu $LTPMCEXEC support_numa pause & #just waits for sigint
 	pid=$!
 	var=`awk '{ print $2 }' /proc/$pid/stat`
 	while [ $var = '(numactl)' ]; do
@@ -215,7 +215,7 @@ test5()
 	Mem_curr=0
 
 	for node in $nodes_list; do
-		numactl --cpunodebind=$node --localalloc support_numa alloc_1MB &
+		numactl --cpunodebind=$node --localalloc $LTPMCEXEC support_numa alloc_1MB &
 		pid=$!
 
 		TST_RETRY_FUNC "check_for_support_numa $pid" 0
@@ -315,7 +315,7 @@ test8()
 			Preferred_node=$(echo $nodes_list | cut -d ' ' -f $((COUNTER+1)))
 		fi
 
-		numactl --preferred=$node support_numa alloc_1MB &
+		numactl --preferred=$node $LTPMCEXEC support_numa alloc_1MB &
 		pid=$!
 
 		TST_RETRY_FUNC "check_for_support_numa $pid" 0
@@ -359,7 +359,7 @@ test9()
 			return
 		fi
 
-		numactl --cpunodebind=$node --membind=$node support_numa alloc_1huge_page &
+		numactl --cpunodebind=$node --membind=$node $LTPMCEXEC support_numa alloc_1huge_page &
 		pid=$!
 		TST_RETRY_FUNC "check_for_support_numa $pid" 0
 
@@ -401,7 +401,7 @@ test10()
 			Preferred_node=$(echo $nodes_list | cut -d ' ' -f $((COUNTER+1)))
 		fi
 
-		numactl --cpunodebind=$node --preferred=$Preferred_node support_numa alloc_2HPSZ_THP &
+		numactl --cpunodebind=$node --preferred=$Preferred_node $LTPMCEXEC support_numa alloc_2HPSZ_THP &
 		pid=$!
 
 		TST_RETRY_FUNC "check_for_support_numa $pid" 0

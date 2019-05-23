@@ -19,14 +19,14 @@ get_calls()
 
 	if [ "$nfs_f" = "nfs" ]; then
 		calls="$(grep $name /proc/net/rpc/$nfs_f | cut -d' ' -f$field)"
-		ROD nfsstat -c$opt | grep -q "$calls"
+		ROD $MCEXEC nfsstat -c$opt | grep -q "$calls"
 		echo "$calls"
 		return
 	fi
 
 	calls=$(tst_rhost_run -c "grep $name /proc/net/rpc/$nfs_f" | \
 		cut -d' ' -f$field)
-	tst_rhost_run -s -c "nfsstat -s$opt" | grep -q "$calls"
+	tst_rhost_run -s -c "$MCEXEC nfsstat -s$opt" | grep -q "$calls"
 	echo "$calls"
 }
 

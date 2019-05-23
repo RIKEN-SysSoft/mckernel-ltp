@@ -24,6 +24,14 @@ top_srcdir		?= ../..
 
 include $(top_srcdir)/include/mk/env_pre.mk
 
+# MCKERNEL:
+# Use host compiler for host tools.
+ifneq ($(HOSTCC),)
+CC			:= $(HOSTCC)
+CFLAGS			:= $(HOSTCFLAGS)
+LDFLAGS			:= $(HOSTLDFLAGS) -L$(top_srcdir)/hostlib
+endif
+
 CFLAGS			+= -DPACKAGE=\"stress\" -DVERSION=\"0.17pre11\"
 
 LDLIBS			+= -lm

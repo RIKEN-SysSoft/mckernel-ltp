@@ -28,32 +28,32 @@ fi
 echo "testing bounding set reading"
 exit_code=0
 
-cap_bounds_r
+$LTPMCEXEC cap_bounds_r
 tmp=$?
 if [ $tmp -ne 0 ]; then
 	exit_code=$tmp
 fi
 
 echo "testing bounding set dropping"
-cap_bounds_rw
+$LTPMCEXEC cap_bounds_rw
 tmp=$?
 if [ $tmp -ne 0 ]; then
 	exit_code=$tmp
 fi
 
 echo "checking bounding set constraint in pI"
-cap_bset_inh_bounds
+$LTPMCEXEC cap_bset_inh_bounds
 tmp=$?
 if [ $tmp -ne 0 ]; then
 	exit_code=$tmp
 fi
 
-exec_with_inh
+$LTPMCEXEC exec_with_inh
 tmp=$?
 if [ $tmp -ne 0 ]; then
 	exit_code=$tmp;
 fi
-exec_without_inh
+$LTPMCEXEC exec_without_inh
 tmp=$?
 if [ $tmp -ne 0 ]; then
 	exit_code=$tmp;

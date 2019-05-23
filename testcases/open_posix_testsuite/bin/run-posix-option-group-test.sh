@@ -9,6 +9,28 @@
 
 BASEDIR="$(dirname "$0")/../conformance/interfaces"
 
+
+### setup for McKernel
+if [ -n "$LTPMCEXEC" ]; then
+    export LTPROOT=`cd \`dirname $0\`/.. && pwd`
+    export MCEXEC_HOOK=${MCEXEC_HOOK:-${LTPROOT}/bin/mcexec_hook.sh}
+    export MCEXEC_TIMEOUT=${MCEXEC_TIMEOUT:-300}
+    export LOGFILE=${LTPROOT}/results/posix-test.log
+
+    mkdir -p ${LTPROOT}/results/old/ || exit 1
+    pushd ${LTPROOT}/results || exit 1
+    for file in posix-test.log ; do
+	if [ -f $file ]; then
+	    _mtime=`stat -c %y $file | awk '{print $1 "_" $2;}'`
+	    mv -f $file "old/$file.$_mtime" || exit 1
+	fi
+    done
+    popd
+
+    date > $LOGFILE || exit 1
+fi
+
+
 usage()
 {
     cat <<EOF
@@ -25,6 +47,7 @@ run_option_group_tests()
 	for test_script in $(find $1 -name run.sh | sort); do
 		(cd "$(dirname "$test_script")" && ./$(basename "$test_script"))
 	done
+	set +x
 }
 
 case $1 in

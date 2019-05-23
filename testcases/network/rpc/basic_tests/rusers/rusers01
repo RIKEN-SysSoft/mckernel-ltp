@@ -15,6 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+### skip if $LTPMCEXEC is set
+if [ -n "$LTPMCEXEC" ]; then
+    echo "This test has no program to run on McKernel."
+    exit 0
+fi
+
 TCID="rusers01"
 TST_TOTAL=5
 

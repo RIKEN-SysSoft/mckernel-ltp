@@ -29,21 +29,21 @@ mkfifo $FIFOFILE
 chmod 777 $FIFOFILE
 exit_code=0
 echo "cap_sys_admin tests"
-verify_caps_exec 0
+$LTPMCEXEC verify_caps_exec 0
 tmp=$?
 if [ $tmp -ne 0 ]; then
 	exit_code=$tmp
 fi
 
 echo "testing for correct caps"
-verify_caps_exec 1
+$LTPMCEXEC verify_caps_exec 1
 tmp=$?
 if [ $tmp -ne 0 ]; then
 	exit_code=$tmp
 fi
 
 echo "testing for correct pI checks"
-inh_capped
+$LTPMCEXEC inh_capped
 tmp=$?
 if [ $tmp -ne 0 ]; then
 	exit_code=$tmp

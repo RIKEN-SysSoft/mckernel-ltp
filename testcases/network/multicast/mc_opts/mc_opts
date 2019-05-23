@@ -40,7 +40,7 @@ while [ $COUNT -le 10 ]; do
 	# Run setsockopt/getsockopt test
 	tst_resm TINFO "Running $EXECUTABLES on $(tst_ipaddr)"
 	for i in $EXECUTABLES; do
-		$i $(tst_ipaddr) > /dev/null || \
+		$LTPMCEXEC $i $(tst_ipaddr) > /dev/null || \
 			tst_brkm TFAIL "$i $(tst_ipaddr) failed"
 	done
 

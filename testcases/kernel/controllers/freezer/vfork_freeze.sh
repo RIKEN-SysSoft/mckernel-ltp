@@ -62,7 +62,7 @@ TMPLOG="$TMPDIR/${0##*/}.$$.txt"
 # for the duration of the sleep.
 function vfork_sleep()
 {
-	vfork -s$sample_sleep 1 -f "$TMPLOG" &
+	$LTPMCEXEC vfork -s$sample_sleep 1 -f "$TMPLOG" &
 	local rc=$?
 	export vfork_proc=$!
 	read sample_proc < "$TMPLOG"

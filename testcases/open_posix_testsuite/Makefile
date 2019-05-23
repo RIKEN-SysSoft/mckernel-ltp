@@ -4,6 +4,8 @@
 # Ngie Cooper, June 2010
 #
 
+include ../../include/mk/config.mk
+
 # Makefiles that are considered critical to execution; if they don't exist
 # all of the Makefiles will be rebuilt by default.
 CRITICAL_MAKEFILE=	conformance/interfaces/timer_settime/Makefile
@@ -15,7 +17,8 @@ SUBDIRS=		conformance functional stress
 
 MAKE_ENV=		LOGFILE=`if echo "$(LOGFILE)" | grep -q '^/'; then echo "$(LOGFILE)"; else echo "\`pwd\`/$(LOGFILE)"; fi`.$@
 
-BUILD_MAKE_ENV=		"CFLAGS=$(CFLAGS)" "LDFLAGS=$(LDFLAGS)"
+BUILD_MAKE_ENV=		"CC=$(CC)"
+BUILD_MAKE_ENV+=	"CFLAGS=$(CFLAGS)" "LDFLAGS=$(LDFLAGS)"
 BUILD_MAKE_ENV+=	"LDLIBS=$(LDLIBS)" $(MAKE_ENV)
 
 TEST_MAKE_ENV=		$(MAKE_ENV)

@@ -65,7 +65,7 @@ validate_pcr()
 	local dev_pcrs="$1"
 	local pcr hash aggregate_pcr
 
-	aggregate_pcr="$(evmctl -v ima_measurement $BINARY_MEASUREMENTS 2>&1 | \
+	aggregate_pcr="$($LTPMCEXEC evmctl -v ima_measurement $BINARY_MEASUREMENTS 2>&1 | \
 		grep 'HW PCR-10:' | awk '{print $3}')"
 	if [ -z "$aggregate_pcr" ]; then
 		tst_res TFAIL "failed to get PCR-10"

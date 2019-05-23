@@ -1,0 +1,769 @@
+システムソフトウェア機能検証 ツール設計書
+
+							2013/11/29
+							SOUM Corporation
+
+1. はじめに
+===========
+
+本書は、システムソフトウェア機能検証において作成・改修したプログラム LTP の
+設計について記載した、設計書です。
+
+
+2. LTP (オリジナル) の概要
+==========================
+
+2.1. 主なディレクトリとファイル
+-------------------------------
+
+ 1) ソースツリー
+
+   $LTP_SRCROOT
+    |-- pan/			ltp-pan のソース
+    |-- runltp			runltp スクリプト
+    |-- runtest/		テストケース定義ファイル群
+    |-- testcases/		テストケースごとのプログラム群
+    |   |-- kernel/		LTP 標準テストプログラム
+    |   |-- misc/		LTP 標準テストプログラム
+    |   |-- network/		network 系テストプログラム
+    |   |-- open_posix_testsuite/ OpenPosix 系テストプログラム
+    |   `-- realtime/		realtime 系テストプログラム
+    |-- testscripts/		テストスーツ実行用スクリプトなど
+    |   |-- networktests.sh	network 系テストスーツ用スクリプト
+    |   `-- test_realtime.sh	realtime 系テストスーツ用スクリプト
+    `-- tools/			テストスーツ実行用ツールなど
+        |-- S99restart_ltp.in	rc 用スクリプト
+        |-- dec_testcases.sh	alltests.next 更新スクリプト
+        |-- mc_start.sh		McKernel 起動・再起動用スクリプト
+        |-- mcexec_hook.sh	タイムアウト処理用スクリプト
+        |-- mcexec_hook_sub.sh	mcexec 実行スクリプト
+        `-- runltp_restart_by_rc.sh rc 用スクリプト
+
+ 2) インストールディレクトリ
+
+   $LTPROOT
+    |-- bin/
+    |   |-- S99restart_ltp	rc 用スクリプト
+    |   |-- dec_testcase.sh	alltests.next 更新用スクリプト
+    |   |-- ltp-pan		ltp-pan 実行バイナリ
+    |   |-- mc_start.sh		McKernel 起動・再起動用スクリプト
+    |   |-- mcexec_hook.sh	タイムアウト処理用スクリプト
+    |   |-- mcexec_hook_sub.sh	mcexec 実行スクリプト
+    |   |-- run-posix-option-group-test.sh OpenPosix 系テストスーツ用スクリプト
+    |   `-- runltp_restart_by_rc.sh rc 用スクリプト
+    |-- conformance/
+    |   `-- interfaces/		OpenPosix 系テストプログラム群
+    |-- output/
+    |   |-- LTP_RUN_ON-*.failed	runltp の出力ファイル
+    |   |-- alltests.next	ハングアップ時の再開用テストケース定義
+    |   |-- alltests.running	実行中のテストケース定義
+    |   |-- hangups		ハングアップ要因テストケースの記録ファイル
+    |   |-- old/		退避用ディレクトリ
+    |   `-- runltp.restart	ハングアップ後の再実行用スクリプト
+    |-- results/
+    |   |-- LTP_RUN_ON-*.log	LTP 標準テスト結果
+    |   |-- netpan.log		network 系テスト結果
+    |   |-- old/		退避用ディレクトリ
+    |   |-- posix-test.log	OpenPosix 系テスト結果
+    |   `-- test_realtime.log	realtime 系テスト結果
+    |-- runltp			runltp スクリプト
+    |-- runtest/		テストケース定義ファイル群
+    `-- testcases/
+        |-- bin/		テストケースごとのプログラム群
+        `-- realtime/		realtime 系テストプログラム群
+
+
+
+2.2. 実行条件
+-------------
+
+LTP の仕様により、実行するには root 権限が必要です。
+
+詳細は後述しますが、改修版の LTP は幾つかの環境変数で動作を制御しています。
+root 権限の行使に sudo を利用する場合、環境変数の継承に留意してください。
+
+本書では、LTP のインストール先を $LTPROOT と、LTP のソースファイルのトップディ
+レクトリを $LTP_SRCROOT と表記します。
+
+LTP がインストールされた $LTPROOT は、LTP 実行時の Working Directory としても
+使用されます。これは LTP の仕様であり、/tmp などにも一時ファイルを作成します
+が、$LTPROOT 配下にも一時ファイルを生成したり、テスト内容によってはテストプロ
+グラムのパーミッションを変更するなどの処理を行います。
+このため、$LTPROOT を NFS マウントなどで共有したり、並列で複数のテストを実行
+したりすることはできません。（行うと、予期せぬ動作をする可能性があります）
+
+なお、テストツールは必ず $LTPROOT に移動した上で実行してください。これは LTP
+内部で使用されているツール類で特定のディレクトリ構造を前提としている部分があ
+るため、$LTPROOT 以外から実行すると期待通りに動作しないケースがあるためです。
+
+
+2.3. ltp-pan
+------------
+
+LTP の中核となるプログラムは $LTPROOT/bin/ltp-pan です。ltp-pan は C 言語で書
+かれたプログラムで、テストケースを定義したファイルを一つ入力することで、記述
+されている全てのテストケースを順次実行します。
+
+$LTPROOT/bin/runltp は ltp-pan のラッパー的な位置付けです。複数に分割されてい
+るテストケースの定義ファイル群のうち、任意のファイルをカンマ区切りで複数指定
+することができるため、テストケースの管理に便利です。
+
+テストケースの定義ファイルの書式は以下のとおりです。
+
+   <テストタグ><空白><テストプログラム実行文>
+
+   ※ 空白行や # で始まる行は無視されます
+
+以下に具体例を記します。
+
+kncc15$ head -5 $LTPROOT/runtest/syscalls
+#DESCRIPTION:Kernel system calls
+abort01 ulimit -c 1024; abort01
+
+accept01 accept01
+accept4_01 accept4_01
+
+
+runltp および ltp-pan の（オリジナルの）動作概要を以下に記します。
+
+
+■ runltp, ltp-pan のオリジナルの挙動概要
+
+ 1) コマンドライン引数でテストケースを指定して runltp を実行
+      ↓
+ 2) $LTPROOT/runltp  (Shell script)
+      ↓
+ 3) 複数のテストケースを統合したファイルを生成して ltp-pan に入力
+      ↓
+ 4) $LTPROOT/bin/ltp-pan (C program)
+      ↓
+ 5) fork + exec でテストプログラムを実行
+      ↓
+ 6) テストケースが終わるまでループ
+
+
+3. McKernel 向けの改修
+======================
+
+LTP のテストプログラムを McKernel 上で動作させるためには、テストプログラムを
+mcexec コマンドから実行する必要があります。LTP のテストプログラムは様々な形式
+で作られており、スクリプト言語で記述されているケースもあるため、適切な形で
+mcexec を呼ぶように改修を行います。
+
+また、McKernel やホスト OS がハングアップした場合に備え、テストプログラムのタ
+イムアウト処理や McKernel のリセットする機能などを追加します。
+
+runltp および ltp-pan の改修後の処理概要を以下に記します。
+
+
+■ runltp, ltp-pan （改修後）の挙動概要
+
+ 1) コマンドライン引数でテストケースを指定して runltp を実行
+      ↓
+ 2) $LTPROOT/runltp
+      ↓
+ 3) ハングアップ時の再開準備 → $LTPROOT/output/runltp.restart 作成
+      ↓
+ 4) 複数のテストケースを統合したファイルを生成して ltp-pan に入力
+      ↓
+ 5) $LTPROOT/bin/ltp-pan
+      ↓
+ 6) ハングアップした場合に再開するためのテストケースファイルを作成
+         → $LTPROOT/output/alltests.next を更新
+      ↓
+ 7) fork + exec で $LTPROOT/bin/mcexec_hook.sh を実行
+      ↓
+ 8) タイムアウト処理を準備して $LTPROOT/bin/mcexec_hook_sub.sh を実行
+      ↓
+ 9) mcexec でテストプログラムを実行
+      ↓
+10) タイムアウトした場合は McKernel をリセット
+      ↓
+11) テストケースが終わるまでループ
+
+
+■ ホスト OS が再起動した場合の挙動概要
+
+ 1) OS 再起動時に /etc/rc.d/rc3.d/S99restart_ltp が実行される
+      ↓
+ 2) $LTPROOT/bin/runltp_restart_by_rc.sh を実行
+      ↓
+ 3) $LTPROOT/output/runltp.restart があればバックグラウンドで実行
+      ↓
+ 4) $LTPROOT/runltp を再実行モードで実行
+      ↓
+ 5) $LTPROOT/output/alltests.next をテストケースファイルとして ltp-pan を実行
+        → alltests.next が無かったり空だったら終了
+      ↓
+ 6) 以降は通常時と同様
+
+
+なお、改修した機能は環境変数 $LTPMCEXEC を設定した場合にのみ有効となり、
+$LTPMCEXEC が未設定の場合はオリジナルの動作となるように実装します。
+
+
+3.1. mcexec の実行
+------------------
+
+前述のとおり、オリジナルの ltp-pan はテストケースごとに fork() を行い、定義ファ
+イルに記載されたテストプログラム実行文を実行します。
+
+改修後の ltp-pan は、この fork() の処理を以下のように変更します。
+
+ a) テストプログラムを実行する前に $LTPROOT/bin/dec_testcases.sh を実行。
+    dec_testcases.sh は $LTPROOT/output/alltests.next の先頭行を削除。
+
+ b) fork() で $LTPROOT/bin/mcexec_hook.sh を実行する。テストプログラムの実行
+    文は mcexec_hook.sh に引数として渡し、mcexec_hook.sh はタイムアウト処理を
+    準備した上で $LTPROOT/bin/mcexec_hook_sub.sh を実行。
+
+ c) mcexec_hook_sub.sh はテストプログラム実行文を引数で受け取る。テストプログ
+    ラム実行文が実行ファイル名のみであり、かつ実行ファイルがスクリプトでない
+    場合に限り、"$LTPMCEXEC <実行ファイル名>" を実行。それ以外の場合には、
+    単純にテストプログラム実行文を実行。
+
+a でテストプログラムを実行する前に、先頭行（実行中のテストケース）を削除した
+リストファイルを作っておくことにより、ホスト OS が再起動された場合に、その原
+因となったテストケースを飛ばして続きのテストを行えるようにします。
+
+b のタイムアウト処理は次項で説明します。
+
+c は、要するにテストケースの定義が "TEST_TAG_A  FILENAME" であり、FILENAME が
+スクリプトではない場合には、mcexec_hook_sub.sh が "$LTPMCEXEC FILENAME" を実行
+するということです。
+
+  ※ これは、FILENAME がスクリプトの場合は McKernel で直接実行することができ
+     ず、またテストプログラム実行文が複雑な場合、どれを McKernel で実行するべ
+     きかを自動的に判別することができないためです。
+       例: "TEST_TAG_B  export LANG=C; date | FILENAME" 
+
+     このような定義については、明示的に $LTPMCEXEC を挿入します。
+       例: "TEST_TAG_B  export LANG=C; date | $LTPMCEXEC FILENAME" 
+
+     スクリプトが使われている場合には、そのスクリプト内で McKernel で実行すべ
+     きプログラムの前に $LTPMCEXEC を挿入します。
+       例: #! /bin/sh
+       	   export LANG=C
+	   date | $LTPMCEXEC FILENAME
+
+
+3.2. McKernel のハングアップ対応
+--------------------------------
+
+mcexec_hook.sh はテストケース実行文を mcexec_hook_sub.sh 経由で実行します。こ
+の処理において、timeout コマンドを使用することで、一定時間の間に処理が完了し
+なかった場合、タイムアウト処理を行います。
+
+mcexec_hook_sub.sh、すなわちテストプログラムが一定時間内に完了しなかった場合、
+McKernel がハングアップしている可能性が考えられるため、テストプログラムを中断
+した上で McKernel のリセット処理を行います。
+
+  ※ 環境変数 MC_RESET_EACHTIME を 1 に設定しておくと、テストプログラムが終了
+     する度に、タイムアウトしていない場合でも McKernel をリセットします。この
+     機能を利用することでより正確なテスト結果を得やすくなりますが、テストに要
+     する時間が相当に増加しますので、留意してください。
+
+なお、McKernel がハングアップした場合、timeout コマンドまでもがハングアップし
+てしまうケースが観測されています。このような場合に備え、timeout コマンドが想
+定時間内に完了しなかった場合に McKernel を強制的にリセットする処理も実装しま
+す。
+
+  ※ テストプログラムが終了した時点で McKernel の強制リセットプロセスが不要と
+     なるため SIGINT を送って中止しますが、この時 "Terminated" のログが出力さ
+     れてしまいます。すなわち、強制リセットが不要な正常状態で "Terminated" が
+     出力されるということです。
+
+McKernel のリセット処理は、$LTPROOT/bin/mc_start.sh で行います。mc_start.sh
+は引数なしで実行した場合に McKernel を起動、引数に -r を指定した場合に再起動
+するように実装します。
+
+  ※ もし mc_start.sh の処理内容を変更する場合、上記の I/F 仕様を必ず踏襲して
+     ください。
+
+なお、timeout コマンドがタイムアウトした場合の返り値は 124 です。テストプログ
+ラムの終了ステータスが 124 であった場合、タイムアウトした可能性を考慮するべき
+です。
+
+
+3.3. ホスト OS のハングアップ（再起動）対応
+-------------------------------------------
+
+テストスーツの実行中にホスト OS が再起動された場合、前述のとおり rc スクリプ
+ト経由でテストスーツの続きを自動的に再開する機能を実装します。
+
+概要は前述したとおりですが、詳細を何点か補足します。
+
+ a) $LTPROOT/bin/S99restart_ltp に rc 経由でテストスーツを自動再開するための
+    スクリプトを用意します。自動再開機能を使う場合、S99restart_ltp を例えば
+    /etc/rc.d/rc3.d/ にコピーしておく必要があります。
+
+ b) S99restart_ltp は $LTPROOT/bin/runltp_restart_by_rc.sh を実行し、
+    runltp_restart_by_rc.sh は $LTPROOT/output/runltp.restart が作成されてい
+    ればバックグラウンドで実行します。
+    runltp.restart は $LTPROOT/runltp を再実行モードで実行します。このとき、
+    $LTPROOT/output/runltp_restart_by_rc.sh.log に runltp.restart の標準出力・
+    標準エラー出力を追記します。
+
+ c) 再実行用のテストケース定義 $LTPROOT/output/alltests.next の他に、実行中の
+    全テストケース定義を $LTPROOT/output/alltests.running に保持しておきます。
+    runltp が再実行モードで起動された際、両者を比較して再起動の要因になったと
+    思われるテストケースを特定し、$LTPROOT/output/hangups に追記します。
+
+ d) 再実行時に追記されるファイル群は、別のテストスーツを実行した際に混じって
+    しまわないように、runltp を新たに実行したタイミングで old/ ディレクトリに
+    退避します。
+
+
+3.4. 改修版用の環境変数
+-----------------------
+
+改修版（すなわち McKernel 向け) の LTP を実行するには、以下の環境変数を設定し
+ておく必要があります。
+
+ a) LTPMCEXEC
+    mcexec の絶対パス（/opt/ppos/bin/mcexec）を設定します。未設定の場合、改修
+    版でなく LTP オリジナルの動作となります。
+
+ b) MCEXEC_TIMEOUT
+    テストプログラム実行のタイムアウト秒数です。未設定の場合は 300 (秒) が適
+    用されます。
+
+ c) MC_RESET_EACHTIME
+    1 に設定した場合、テストプログラムの実行後に（タイムアウトしていなくて
+    も）McKernel をリセットします。1 以外を設定した場合は無効となります。
+
+ d) RHOST
+    network 系テストスーツで使用するリモートノードを指定します。対象となるリ
+    モートノードには、ローカルノードと同じ構成で LTP がインストールされている
+    必要があります。未設定の場合、ローカルノードが適用されます。
+
+ e) RSH
+    network 系テストスーツでのリモートノードへのアクセス方法として、rsh ある
+    いは ssh を指定します。未設定の場合は rsh が適用されます。
+
+
+4. LTP 標準テストスーツ
+=======================
+
+$LTPROOT/runltp を実行します。
+
+テストケースの定義ファイル群は $LTPROOT/runtest/ 配下にあります。ただし、
+network 系テスト用のテストケースファイルや、実行できない定義ファイルなども混
+じっているため、注意が必要です。
+
+McKernel 上で動作する（動作させて意味のある）テストケース群は以下のとおりです。
+
+   syscalls, fs, fs_perms_simple, fsx,dio, mm, ipc, sched, math,
+   nptl, pty, containers, controllers, filecaps, cap_bounds,
+   fcntl-locktests, connectors, timers, numa, hugetlb, io_cd,ima,
+   hyperthreading, kernel_misc, test_dma_thread_diotest7,
+   securebits, stress.part1
+
+  ※ 不用意な実行は容易にハングアップを引き起こします。かならず、内容を確認し
+     た上で実行するようにしてください。
+
+なお、実行するテストケースを細かく調整したい場合には、自分でテストケースの定
+義ファイルを作成しても構いません。ただし、作成する場合は $LTPROOT/runtest/ 配
+下に配置する必要があります。
+テストケースの実行内容やテスト用スクリプトを作成・調整する場合は、3.1. 節の内
+容に準じて $LTPMCEXEC を適切に挿入してください。
+
+各テストケースで使用されるプログラムのソースやスクリプト類は
+$LTP_SRCROOT/testcases/kernel あるいは $LTP_SRCROOT/testcases/misc の配下にあ
+ります。
+
+  ※ インストールされるプログラムやスクリプトは $LTPROOT/testcase/bin/ の直下
+     に配置されますが、これらの元となるソース類は階層構造を持っています。
+     インストールされたプログラムから元のソースを直接的に辿ることはできないた
+     め、例えば PROG01 の元ファイルを探す場合には 
+       find $LTPROOT/testcases/ -name "PROG01*"
+     などのコマンドで検索を行ってください。
+
+テスト結果は $LTPROOT/results/LTP_RUN_ON-<日付>.log に出力されます。
+
+
+■ 実行方法
+
+$LTPROOT に移動し、runltp の -f オプションでテストケース定義ファイルを指定し
+て実行します。
+
+■ 実行例
+
+$LTPROOT/runtest/syscalls と $LTPROOT/runtest/fs のテストを実行する場合
+
+kncc15$ cd /other/ltp
+kncc15$ sudo env LTPMCEXEC=/opt/ppos/bin/mcexec MCEXEC_TIMEOUT=300 \
+MC_RESET_EACHTIME=0 ./runltp -f syscalls,fs
+
+■ 実行結果例
+
+  :
+<<<test_start>>>
+tag=writev05 stime=1386546729
+cmdline="writev05"
+contacts=""
+analysis=exit
+<<<test_output>>>
+writev05    0  TINFO  :  Enter block 1
+writev05    0  TINFO  :  Received EFAULT as expected
+writev05    0  TINFO  :  block 1 PASSED
+writev05    0  TINFO  :  Exit block 1
+<<<execution_status>>>
+initiation_status="ok"
+duration=1 termination_type=exited termination_id=0 corefile=no
+cutime=1 cstime=33
+<<<test_end>>>
+Terminated
+<<<test_start>>>
+tag=fcntl18 stime=1386519969
+cmdline="fcntl18"
+contacts=""
+analysis=exit
+<<<test_output>>>
+fcntl18     0  TINFO  :  Enter block 1
+fcntl18     1  TPASS  :  Test F_GETLK: for errno EFAULT PASSED
+fcntl18     0  TINFO  :  Block 1 PASSED
+fcntl18     0  TINFO  :  Exit block 1
+fcntl18     0  TINFO  :  Enter block 2
+fcntl18     2  TPASS  :  Test F_GETLK64: for errno EFAULT PASSED
+fcntl18     0  TINFO  :  Block 2 PASSED
+fcntl18     0  TINFO  :  Exit block 2
+fcntl18     0  TINFO  :  Enter block 3
+fcntl18     3  TFAIL  :  child returned bad exit status
+fcntl18     0  TINFO  :  Block 3 FAILED
+fcntl18     0  TINFO  :  Exit block 3
+Exit status: 1
+Terminated
+<<<execution_status>>>
+initiation_status="ok"
+duration=8 termination_type=exited termination_id=0 corefile=no
+cutime=1 cstime=19
+<<<test_end>>>
+
+■ テスト結果の出力例
+
+kncc15$ cat /other/ltp/results/LTP_RUN_ON-*
+Test Start Time: Sun Dec  8 22:39:53 2013
+-----------------------------------------
+Testcase                       Result     Exit Value
+--------                       ------     ----------
+abort01                        PASS       0    
+accept01                       FAIL       124  
+accept4_01                     PASS       0    
+access01                       PASS       0    
+  :
+fcntl18                        FAIL       1    
+  :
+writev05                       PASS       0    
+writev06                       PASS       0    
+
+-----------------------------------------------
+Total Tests: 256
+Total Failures: 7
+Kernel Version: 2.6.32-220.el6.x86_64
+Machine Architecture: x86_64
+Hostname: kncc15
+
+
+5. network 系テストスーツ
+=========================
+
+network 系テストは runltp ではなく $LTPROOT/testscripts/networktests.sh を使
+用します。
+
+networktests.sh は runltp と同様に、内部的に ltp-pan を実行する仕組みになって
+いますが、テストケースの管理方法が runltp とは異なっており、networktests.sh
+で独自に行っています。
+利用できるテストケースの一覧は、networktest.sh -h を実行して表示される Usage
+を参照してください。
+
+なお、networktest.sh は runltp と同様にホスト OS がハングアップ（再起動）した
+場合に続きのテストケースから再開する機能を組み入れてあります。ただし、リモー
+トノードで McKernel あるいはホスト OS がハングアップしてしまった場合には対応
+していません。
+
+テスト結果は $LTPROOT/results/netpan.log に出力されます。ただし、内部的には
+ltp-pan を使用しているものの runltp とは異なり、pretty print はされません。
+また、テストが FAIL した場合でも終了ステータスとして 0 を返す場合が多く、
+netpan.log だけでは成否を判断できない場合が多いです。
+
+  ※ tag がテストケース名、stat が終了ステータスです。
+     stat=124 の場合はタイムアウトした可能性を考慮に入れるべきです。
+
+
+■ 実行方法
+
+$LTPROOT に移動し、networktests.sh にテストケースを示すオプションを指定して実
+行します。
+
+■ 実行例
+
+network 系テスト全てを実行する場合
+
+kncc15$ cd /other/ltp
+kncc15$ sudo env LTPMCEXEC=/opt/ppos/bin/mcexec MCEXEC_TIMEOUT=300 \
+MC_RESET_EACHTIME=0 RSH=ssh RHOST=kncc18 \
+./testscripts/networktests.sh -w
+
+■ 実行結果例
+
+  :
+<<<test_start>>>
+tag=in6_01 stime=1386558144
+cmdline="in6_01"
+contacts=""
+analysis=exit
+<<<test_output>>>
+in6_01      1  TPASS  :  type of in6.s6_addr[0] is uint8_t
+in6_01      2  TPASS  :  sizeof(in6.s6_addr) == 16
+in6_01      3  TPASS  :  all sockaddr_in6 fields present and correct
+in6_01      4  TPASS  :  IN6ADDR_ANY_INIT present
+  :
+in6_01     16  TPASS  :  "10.0.0.1" is AF_INET
+in6_01     17  TPASS  :  "::ffff:10.0.0.1" is AF_INET6
+in6_01     18  TPASS  :  "::1" is AF_INET6
+in6_01     19  TPASS  :  "::" is AF_INET6
+Terminated
+<<<execution_status>>>
+initiation_status="ok"
+duration=0 termination_type=exited termination_id=0 corefile=no
+cutime=1 cstime=20
+<<<test_end>>>
+<<<test_start>>>
+tag=in6_02 stime=1386558144
+cmdline="in6_02"
+contacts=""
+analysis=exit
+<<<test_output>>>
+in6_02      1  TPASS  :  if_nametoindex("lo") 1
+in6_02      2  TPASS  :  if_nametoindex("eth0") 2
+in6_02      3  TPASS  :  if_nametoindex("hoser75") 0
+in6_02      4  TPASS  :  if_nametoindex("6") 0
+  :
+in6_02     25  TPASS  :  if_nameindex idx 1 name "lo"
+in6_02     26  TPASS  :  if_nameindex idx 2 name "eth0"
+in6_02     27  TPASS  :  if_nameindex idx 3 name "eth1"
+in6_02     28  TBROK  :  getdatasize failed: errno 6 (No such device or
+address)
+<<<execution_status>>>
+initiation_status="ok"
+duration=1 termination_type=exited termination_id=0 corefile=no
+cutime=1 cstime=20
+<<<test_end>>>
+  :
+
+■ テスト結果の出力例
+
+kncc15$ cat /other/ltp/results/netpan.log
+startup='Mon Dec  9 12:02:24 2013'
+tag=in6_01 stime=1386558144 dur=0 exit=exited stat=0 core=no cu=1 cs=20
+tag=in6_02 stime=1386558144 dur=1 exit=exited stat=0 core=no cu=1 cs=20
+tag=getaddrinfo_01 stime=1386558145 dur=0 exit=exited stat=0 core=no cu=2
+cs=20
+tag=asapi_01 stime=1386558145 dur=1 exit=exited stat=0 core=no cu=1 cs=21
+tag=asapi_02 stime=1386558146 dur=0 exit=exited stat=0 core=no cu=1 cs=21
+tag=asapi_03 stime=1386558146 dur=317 exit=exited stat=124 core=no cu=3
+cs=361
+tag=asapi_04 stime=1386558463 dur=9 exit=exited stat=0 core=no cu=1 cs=21
+  :
+
+
+6. OpenPosix 系テストスーツ
+===========================
+
+OpenPosix 系のテストスーツでは $LTPROOT/bin/run-posix-option-group-test.sh を
+使用します。
+
+run-posix-option-group-test.sh は ltp-pan を使用しておらず、またテストケース
+をリストで管理していません。代わりに、独自に管理しているテストグループを指定
+する仕様になっています。
+テストグループについては run-posix-option-group-test.sh を引数なしで実行して
+表示される Usage を参照してください。
+
+run-posix-option-group-test.sh は各テストグループごとに決められたディレクトリ
+配下から run.sh を検索し、順次実行する仕組みになっています。(find コマンドで
+検索して得られた順に実行するため、実行順序は sort されません)
+それぞれの run.sh は $LTPROOT/bin/run-tests.sh を経由し、更に $LTPROOT/bin/t0
+を経由してテストプログラムが実行されます。
+
+t0 には ltp-pan と同様の改修が施してあり、$LTPMCEXEC が設定されている場合には
+$LTPROOT/bin/mcexec_hook.sh および $LTPROOT/bin/mcexec_hook_sub.sh を経由して
+プログラムを実行することにより、McKernel 上で実行される仕組みになっています。
+
+OpenPosix 系テストスーツでは、テストケースの管理手法の都合により、ホスト OS
+がハングアップ（再起動）した場合の自動再開処理をサポートしていません。
+
+なお、$LTPROOT/bin/run-tests.sh の仕様により、OpenPosix 系のテストスーツは全
+て引数をとらずに実行されます。テストプログラムを追加したり改造したりする場合
+には注意してください。
+
+各テストケースで使用されるプログラムやスクリプト類は
+$LTPROOT/conformance/interfaces/ 配下にあります。後述のように、実行ファイルの
+パスが出力されますので、参考にしてください。元となるソースファイルなどは
+$LTP_SRCROOT/testcases/open_posix_testsuite/ 配下にあります。
+
+テスト結果は $LTPROOT/results/posix-test.log に出力されます。
+
+
+■ 実行方法
+
+$LTPROOT に移動し、bin/run-posix-option-group-test.sh に実行するテストグルー
+プを引数で指定して実行します。
+
+■ 実行例
+
+テストグループ MSG を実行する場合
+
+kncc15$ cd /other/ltp
+kncc15$ sudo env LTPMCEXEC=/opt/ppos/bin/mcexec MCEXEC_TIMEOUT=300 \
+MC_RESET_EACHTIME=0 bin/run-posix-option-group-test.sh MSG
+
+■ 実行結果例
+
+  :
+Executing message queues tests
+++ find bin/../conformance/interfaces/mq_close
+bin/../conformance/interfaces/mq_getattr
+bin/../conformance/interfaces/mq_notify bin/../conformance/interfaces/mq_open
+bin/../conformance/interfaces/mq_receive
+bin/../conformance/interfaces/mq_send
+bin/../conformance/interfaces/mq_setattr
+bin/../conformance/interfaces/mq_timedreceive
+bin/../conformance/interfaces/mq_timedsend
+bin/../conformance/interfaces/mq_unlink -name run.sh
++ for test_script in '$(find $1 -name run.sh)'
+++ dirname bin/../conformance/interfaces/mq_close/run.sh
++ cd bin/../conformance/interfaces/mq_close
+++ basename bin/../conformance/interfaces/mq_close/run.sh
++ ./run.sh
+conformance/interfaces/mq_close/mq_close_3-1: execution: EXITED ABNORMALLY 
+*******************
+SUMMARY
+*******************
+PASS              5
+FAIL              1
+*******************
+TOTAL             6
+*******************
++ for test_script in '$(find $1 -name run.sh)'
+++ dirname bin/../conformance/interfaces/mq_getattr/speculative/run.sh
++ cd bin/../conformance/interfaces/mq_getattr/speculative
+++ basename bin/../conformance/interfaces/mq_getattr/speculative/run.sh
++ ./run.sh
+*******************
+SUMMARY
+*******************
+PASS              1
+FAIL              0
+*******************
+TOTAL             1
+*******************
+  :
+
+■ テスト結果の出力例
+
+kncc15$ cat /other/ltp/results/posix-test.log
+Mon Dec  9 02:35:03 JST 2013
+conformance/interfaces/mq_close/mq_close_3-3: execution: PASS
+conformance/interfaces/mq_close/mq_close_1-1: execution: PASS
+conformance/interfaces/mq_close/mq_close_4-1: execution: PASS
+conformance/interfaces/mq_close/mq_close_2-1: execution: PASS
+conformance/interfaces/mq_close/mq_close_3-1: execution: EXITED ABNORMALLY:
+Output: 
+Shuting down mckernel.
+Starting mckernel.
+mckernel started.
+conformance/interfaces/mq_close/mq_close_3-2: execution: PASS
+conformance/interfaces/mq_getattr/speculative/mq_getattr_speculative_7-1:
+execution: PASS
+conformance/interfaces/mq_getattr/mq_getattr_5-1: execution: PASS
+conformance/interfaces/mq_getattr/mq_getattr_2-2: execution: PASS
+conformance/interfaces/mq_getattr/mq_getattr_4-1: execution: PASS
+  :
+
+
+7. realtime 系テストスーツ
+==========================
+
+realtime 系のテストスーツでは、$LTPROOT/testscripts/test_realtime.sh を使用し
+ます。
+
+test_realtime.sh は ltp-pan も t0 も使用していません。またテストケースのリス
+トを管理しておらず、独自に管理しているテストグループを指定する仕様になってい
+ます。
+テストグループについては、test_realtime.sh にオプション -t list を指定して表
+示される Usage を参照してください。
+
+test_realtime.sh は、各テストグループごとに決められたディレクトリ配下から
+run_auto.sh を検索し、順次実行する仕組みになっています。(find コマンドで検索
+して得られた順に実行するため、実行順序は sort されません)
+それぞれの run_auto.sh は $LTPROOT/testcases/realtime/scripts/run_c_files.sh
+を経由してテストプログラムが実行されます。
+
+realtime 系テストスーツでは、テストケースの管理手法の都合により、ホスト OS
+がハングアップ（再起動）した場合の自動再開処理をサポートしていません。
+
+run_c_files.sh は名称のとおりテストプログラムを実行しますが、$LTPMCEXEC が設定さ
+れている場合には $LTPROOT/bin/mcexec_hook および mcexec_hook_sub.sh を経由す
+るように改修してあり、テストプログラムが McKernel 上で実行されます。
+
+なお、run_c_files.sh の仕様により、テストプログラムの引数は run_auto.sh には
+記述せず、$LTPROOT/testcases/realtime/profiles/default に記述しなければなりま
+せん。テストプログラムを追加したり改造したりする場合には注意してください。
+
+  ※ 上記の default ファイルに実行コマンドを記述する際、$LTPMCEXEC は挿入しない
+     でください。これは、run_c_files.sh の仕様に準じ、$LTPMCEXEC を無条件に付与
+     しているためです。
+
+各テストグループで実行されるプログラム類は $LTPROOT/testcases/realtime 配下の、
+テストグループに準じたディレクトリにあります。元となるソースファイルなどは、
+$LTP_SRCROOT/testcases/realtime/ 配下にあります。
+
+テスト結果は $LTPROOT/results/test_realtime.log に出力されます。
+
+
+■ 実行方法
+
+$LTPROOT に移動し、testscripts/test_realtime.sh の -t オプションに実行するテ
+ストグループを指定して実行します。
+
+■ 実行例
+
+テストグループ func/prio-wake を実行する場合
+
+kncc15$ cd /other/ltp
+kncc15$ sudo env LTPMCEXEC=/opt/ppos/bin/mcexec MCEXEC_TIMEOUT=300 \
+MC_RESET_EACHTIME=0 testscripts/test_realtime.sh -t func/prio-wake
+
+■ 実行結果例
+
+  :
+--- Running testcase prio-wake  ---
+Mon Dec  9 05:46:08 JST 2013
+Logging to /other/ltp/results/test_realtime.log
+
+-----------------------
+Priority Ordered Wakeup
+-----------------------
+Worker Threads: 1
+Calling pthread_cond_broadcast() with mutex: LOCKED
+
+pthread_create failed: 3 (No such process)
+pthread_create failed: 3 (No such process)
+
+Criteria: Threads should be woken up in priority order
+Result: PASS
+
+Mon Dec  9 05:46:08 JST 2013
+The prio-wake test appears to have completed.
+
+
+■ テスト結果の出力例
+
+kncc15$ cat /other/ltp/results/test_realtime.log
+（実行結果と同じ内容）
+
+
+
+
+以上

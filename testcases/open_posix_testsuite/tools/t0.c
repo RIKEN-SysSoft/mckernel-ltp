@@ -82,6 +82,15 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+#ifdef MCEXEC_ENABLED
+	const char *mc_timeout = getenv("MCEXEC_TIMEOUT");
+	if (mc_timeout && (timeout = atoi(mc_timeout)) > 0)
+	    timeout += 60;
+	    /* Note: timeout should be enough larger than MCEXEC_TIMEOUT
+	     *       to reset McKernel.
+	     */
+	else
+#endif/*MCEXEC_ENABLED*/
 	timeout = atoi(argv[1]);
 	if (timeout < 1) {
 		fprintf(stderr,
@@ -103,6 +112,30 @@ int main(int argc, char *argv[])
 		exit(1);
 	case 0:
 		setpgid(0, 0);
+
+#ifdef MCEXEC_ENABLED
+#ifndef ARG_MAX
+#define ARG_MAX (4096)
+#endif/*ARG_MAX*/
+		{
+		    const char *mcexec  = getenv("LTPMCEXEC");
+		    const char *mc_hook = getenv("MCEXEC_HOOK");
+
+		    if (mcexec && mc_hook) {
+			char _mc_cmdline[ARG_MAX+1];
+			if (snprintf(_mc_cmdline, ARG_MAX, 
+				"%s '%s'", mc_hook, argv[2]) < 0) {
+			    perror("snprintf failed");
+			    exit(1);
+			}
+			execlp("sh", "sh", "-c", _mc_cmdline, (char *)0);
+			perror("execlp failed");
+			exit(1);
+		    }
+		}
+		/* go ahead with default behavior. */
+#endif/*MCEXEC_ENABLED*/
+
 		execvp(argv[2], &argv[2]);
 		perror("execvp failed");
 		exit(1);

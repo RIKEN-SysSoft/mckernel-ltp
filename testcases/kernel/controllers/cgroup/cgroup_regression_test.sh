@@ -96,7 +96,7 @@ check_kernel_bug()
 #---------------------------------------------------------------------------
 test1()
 {
-	cgroup_regression_fork_processes &
+	$LTPMCEXEC cgroup_regression_fork_processes &
 	sleep 1
 
 	mount -t cgroup -o none,name=foo cgroup cgroup/
@@ -327,7 +327,7 @@ test6()
 
 	cgroup_regression_6_1.sh &
 	local pid1=$!
-	cgroup_regression_6_2 &
+	$LTPMCEXEC cgroup_regression_6_2 &
 	local pid2=$!
 
 	tst_res TINFO "run test for 30 sec"
@@ -456,7 +456,7 @@ test8()
 		return
 	fi
 
-	if cgroup_regression_getdelays -C cgroup/tasks > /dev/null 2>&1; then
+	if $LTPMCEXEC cgroup_regression_getdelays -C cgroup/tasks > /dev/null 2>&1; then
 		tst_res TFAIL "should have failed to get cgroupstat of tasks file"
 	fi
 

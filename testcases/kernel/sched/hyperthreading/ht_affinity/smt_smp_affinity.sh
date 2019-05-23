@@ -38,7 +38,7 @@ RC=0
 tst_resm TINFO "Begin: SMT/SMP Affinity"
 
 if [ -f ./ht_enabled ];then
-	./ht_enabled
+	$LTPMCEXEC ./ht_enabled
 	ret_value=$?
 
 	if [ $ret_value -ne 0 ];then
@@ -69,7 +69,7 @@ else
 
 	if [ $cpu_cores -ge 1 ];then
 		if [ -f ./ht_affinity ];then
-			./ht_affinity
+			$LTPMCEXEC ./ht_affinity
 		else
 			tst_resm TBROK "ht_affinity:File not found"
 			tst_resm TINFO "End: SMT/SMP Affinity"

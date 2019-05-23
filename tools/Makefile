@@ -24,8 +24,33 @@ top_srcdir		?= ..
 
 include $(top_srcdir)/include/mk/testcases.mk
 
+# MCKERNEL:
+# Use host compiler for host tools.
+ifneq ($(HOSTCC),)
+CC			:= $(HOSTCC)
+CFLAGS			:= $(HOSTCFLAGS)
+LDFLAGS			:= $(HOSTLDFLAGS) -L$(top_srcdir)/hostlib
+
+LIBLTP_DIR		:= $(abs_top_builddir)/hostlib
+LIBLTP			:= $(LIBLTP_DIR)/libltp.a
+endif
+
 INSTALL_TARGETS		:= *.awk *.pl *.sh html_report_header.txt
 
 INSTALL_DIR		:= bin
+
+# MCKERNEL:
+# Override the rule for LIBLTP to link the LTP library created for host.
+ifneq ($(HOSTCC),)
+MAKE_DEPS		+= $(LIBLTP)
+$(LIBLTP): $(LIBLTP_DIR)
+	$(MAKE) -C "$^" -f "$(abs_top_srcdir)/hostlib/Makefile" all
+endif
+INSTALL_TARGETS		+= S99restart_ltp
+
+install: S99restart_ltp
+
+S99restart_ltp: S99restart_ltp.in
+	sed -e "s#__LTPROOT__#${prefix}#g" $^ > $@
 
 include $(top_srcdir)/include/mk/generic_trunk_target.mk

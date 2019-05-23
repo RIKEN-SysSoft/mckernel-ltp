@@ -23,4 +23,11 @@
 top_srcdir		?= ../../..
 
 include $(top_srcdir)/include/mk/env_pre.mk
+
+# MCKERNEL:
+# Exclude objdump that causes build error.
+ifneq ($(HOSTCC),)
+FILTER_OUT_DIRS		+= objdump
+endif
+
 include $(top_srcdir)/include/mk/generic_trunk_target.mk

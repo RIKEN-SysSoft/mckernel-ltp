@@ -10,6 +10,17 @@ top_srcdir?=	..
 
 srcdir=		$(top_srcdir)/tools
 
+
+# MCKERNEL:
+# Build host tools with a host compiler
+include ../../../include/mk/config.mk
+ifneq ($(HOSTCC),)
+CC			:= $(HOSTCC)
+CFLAGS			:= $(HOSTCFLAGS)
+LDFLAGS			:= $(HOSTLDFLAGS)
+endif
+
+
 all: ../bin/t0
 
 clean:

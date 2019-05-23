@@ -235,7 +235,7 @@ case5 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_simple_echo 3 $CPUCTL/tmp/tasks
+	$LTPMCEXEC ./cpuctl_fj_simple_echo 3 $CPUCTL/tmp/tasks
 	if [ $? -ne 22 ]	# define EINVAL 22  /* Invalid argument */
 	then
 		return 1;
@@ -251,7 +251,7 @@ case5 ()
 # modify the shares of the root group
 case6 ()
 {
-	./cpuctl_fj_simple_echo 2048 $CPUCTL/cpu.shares
+	$LTPMCEXEC ./cpuctl_fj_simple_echo 2048 $CPUCTL/cpu.shares
 	if [ $? -ne 22 ]	# define EINVAL 22  /* Invalid argument */
 	then
 		return 1;
@@ -269,7 +269,7 @@ case7 ()
 {
 	mkdir $CPUCTL/tmp
 
-	./cpuctl_fj_simple_echo -1 $CPUCTL/tmp/cpu.shares
+	$LTPMCEXEC ./cpuctl_fj_simple_echo -1 $CPUCTL/tmp/cpu.shares
 	if [ $? -ne 22 ]	# define EINVAL 22  /* Invalid argument */
 	then
 		return 1;
@@ -281,7 +281,7 @@ case7 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -309,7 +309,7 @@ case8 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -337,7 +337,7 @@ case9 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -365,7 +365,7 @@ case10 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -393,7 +393,7 @@ case11 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -421,7 +421,7 @@ case12 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -451,7 +451,7 @@ case13 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -479,7 +479,7 @@ case14 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -495,7 +495,7 @@ case15 ()
 {
 	mkdir $CPUCTL/tmp
 
-	./cpuctl_fj_simple_echo 2048.23 $CPUCTL/tmp/cpu.shares
+	$LTPMCEXEC ./cpuctl_fj_simple_echo 2048.23 $CPUCTL/tmp/cpu.shares
 	if [ $? -ne 22 ]	# define EINVAL 22  /* Invalid argument */
 	then
 		return 1;
@@ -507,7 +507,7 @@ case15 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -524,7 +524,7 @@ case16 ()
 {
 	mkdir $CPUCTL/tmp
 
-	./cpuctl_fj_simple_echo 2048ABC $CPUCTL/tmp/cpu.shares
+	$LTPMCEXEC ./cpuctl_fj_simple_echo 2048ABC $CPUCTL/tmp/cpu.shares
 	if [ $? -ne 22 ]	# define EINVAL 22  /* Invalid argument */
 	then
 		return 1;
@@ -536,7 +536,7 @@ case16 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks
@@ -552,7 +552,7 @@ case17 ()
 {
 	mkdir $CPUCTL/tmp
 
-	./cpuctl_fj_simple_echo ABC $CPUCTL/tmp/cpu.shares
+	$LTPMCEXEC ./cpuctl_fj_simple_echo ABC $CPUCTL/tmp/cpu.shares
 	if [ $? -ne 22 ]	 # define EINVAL 22  /* Invalid argument */
 	then
 		return 1;
@@ -564,7 +564,7 @@ case17 ()
 		return 1;
 	fi
 
-	./cpuctl_fj_cpu-hog &
+	$LTPMCEXEC ./cpuctl_fj_cpu-hog &
 	pid=$!
 
 	echo $pid > $CPUCTL/tmp/tasks

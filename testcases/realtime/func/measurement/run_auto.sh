@@ -10,6 +10,13 @@ fi
 source $SCRIPTS_DIR/setenv.sh
 
 
+
+### missing profile needed for run_c_files.sh, skip this.
+echo "This testcase is incomplete -- missing profile. (skipped)"
+exit 0
+
+
+
 # This is a temporary workaround for previous
 # loop support patch which seems to be having
 # issues right now.

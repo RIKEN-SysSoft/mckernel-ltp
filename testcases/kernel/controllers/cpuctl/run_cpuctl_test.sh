@@ -109,7 +109,7 @@ NUM_CPUS=`tst_ncpus`
 		do
 			cp cpuctl_test01 cpuctl_task_$i ;
 			chmod +x cpuctl_task_$i;
-			./cpuctl_task_$i $i /dev/cpuctl/group_$i $$ $NUM_CPUS $TEST_NUM \
+			$LTPMCEXEC ./cpuctl_task_$i $i /dev/cpuctl/group_$i $$ $NUM_CPUS $TEST_NUM \
 			 >>$LTPROOT/output/cpuctl_results_$FILE.txt &
 			if [ $? -ne 0 ]
 			then
@@ -136,7 +136,7 @@ NUM_CPUS=`tst_ncpus`
 			cleanup;
 			exit -1;
 		fi
-		./cpuctl_def_task01 $i /dev/cpuctl/group_def $$ $NUM_CPUS \
+		$LTPMCEXEC ./cpuctl_def_task01 $i /dev/cpuctl/group_def $$ $NUM_CPUS \
 		$TEST_NUM  >>$LTPROOT/output/cpuctl_results_$FILE.txt &
 		if [ $? -ne 0 ]
 		then
@@ -171,7 +171,7 @@ NUM_CPUS=`tst_ncpus`
 			fi;
 
 			GROUP_NUM=$i MYGROUP=$MYGROUP SCRIPT_PID=$SCRIPT_PID NUM_CPUS=$NUM_CPUS \
-			TEST_NUM=$TEST_NUM TASK_NUM=$TASK_NUM nice -n $NICELEVEL ./cpuctl_task_$TASK_NUM \
+			TEST_NUM=$TEST_NUM TASK_NUM=$TASK_NUM nice -n $NICELEVEL $LTPMCEXEC ./cpuctl_task_$TASK_NUM \
 			>>$LTPROOT/output/cpuctl_results_$FILE.txt &
 			if [ $? -ne 0 ]
 			then
@@ -203,7 +203,7 @@ NUM_CPUS=`tst_ncpus`
 		MYGROUP=/dev/cpuctl/group_def ;
 		GROUP_NUM=0 MYGROUP=$MYGROUP SCRIPT_PID=$SCRIPT_PID \
 		NUM_CPUS=$NUM_CPUS TEST_NUM=$TEST_NUM TASK_NUM=0 \
-		./cpuctl_def_task02 >>$LTPROOT/output/cpuctl_results_$FILE.txt &
+		$LTPMCEXEC ./cpuctl_def_task02 >>$LTPROOT/output/cpuctl_results_$FILE.txt &
 		if [ $? -ne 0 ]
 		then
 			echo "Error: Could not run ./cpuctl_def_task02"
@@ -231,7 +231,7 @@ NUM_CPUS=`tst_ncpus`
 			chmod +x cpuctl_task_$TASK_NUM;
 
 			GROUP_NUM=$i MYGROUP=$MYGROUP SCRIPT_PID=$SCRIPT_PID NUM_CPUS=$NUM_CPUS \
-			TEST_NUM=$TEST_NUM TASK_NUM=$TASK_NUM ./cpuctl_task_$TASK_NUM \
+			TEST_NUM=$TEST_NUM TASK_NUM=$TASK_NUM $LTPMCEXEC ./cpuctl_task_$TASK_NUM \
 			>>$LTPROOT/output/cpuctl_results_$FILE.txt &
 			if [ $? -ne 0 ]
 			then
@@ -263,7 +263,7 @@ NUM_CPUS=`tst_ncpus`
 		MYGROUP=/dev/cpuctl/group_def ;
 		GROUP_NUM=0 MYGROUP=$MYGROUP SCRIPT_PID=$SCRIPT_PID \
 		NUM_CPUS=$NUM_CPUS TEST_NUM=$TEST_NUM TASK_NUM=0 \
-		./cpuctl_def_task02 >>$LTPROOT/output/cpuctl_results_$FILE.txt &
+		$LTPMCEXEC ./cpuctl_def_task02 >>$LTPROOT/output/cpuctl_results_$FILE.txt &
 		if [ $? -ne 0 ]
 		then
 			echo "Error: Could not run ./cpuctl_def_task02"

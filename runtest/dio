@@ -8,36 +8,36 @@ dio05 diotest5
 dio06 diotest6
 
 ## Run the tests with larger buffersize
-dio07 diotest1 -b 65536
-dio08 diotest2 -b 65536
-dio09 diotest3 -b 65536
-dio10 diotest4 -b 65536
-dio11 diotest5 -b 65536
-dio12 diotest6 -b 65536
+dio07 $LTPMCEXEC diotest1 -b 65536
+dio08 $LTPMCEXEC diotest2 -b 65536
+dio09 $LTPMCEXEC diotest3 -b 65536
+dio10 $LTPMCEXEC diotest4 -b 65536
+dio11 $LTPMCEXEC diotest5 -b 65536
+dio12 $LTPMCEXEC diotest6 -b 65536
 
 ### Run the tests with larger iterations
-dio13 diotest1 -b 65536 -n 2000
-dio14 diotest2 -b 65536 -i 1000
-dio15 diotest3 -b 65536 -i 1000
-dio16 diotest5 -b 65536 -i 1000
-dio17 diotest6 -b 65536 -i 1000
+dio13 $LTPMCEXEC diotest1 -b 65536 -n 2000
+dio14 $LTPMCEXEC diotest2 -b 65536 -i 1000
+dio15 $LTPMCEXEC diotest3 -b 65536 -i 1000
+dio16 $LTPMCEXEC diotest5 -b 65536 -i 1000
+dio17 $LTPMCEXEC diotest6 -b 65536 -i 1000
 
 ## Run the tests with larger offset - 1MB
-dio18 diotest2 -b 65536 -i 1000 -o 1024000
-dio19 diotest3 -b 65536 -i 1000 -o 1024000
-dio20 diotest5 -b 65536 -i 1000 -o 1024000
-dio21 diotest6 -b 65536 -i 1000 -o 1024000
+dio18 $LTPMCEXEC diotest2 -b 65536 -i 1000 -o 1024000
+dio19 $LTPMCEXEC diotest3 -b 65536 -i 1000 -o 1024000
+dio20 $LTPMCEXEC diotest5 -b 65536 -i 1000 -o 1024000
+dio21 $LTPMCEXEC diotest6 -b 65536 -i 1000 -o 1024000
 
 ## Run the tests with larger offset - 100 MB
-dio22 diotest2 -b 65536 -i 1000 -o 104857600
-dio23 diotest3 -b 65536 -i 1000 -o 104857600
-dio24 diotest5 -b 65536 -i 1000 -o 104857600
-dio25 diotest6 -b 65536 -i 1000 -o 104857600
+dio22 $LTPMCEXEC diotest2 -b 65536 -i 1000 -o 104857600
+dio23 $LTPMCEXEC diotest3 -b 65536 -i 1000 -o 104857600
+dio24 $LTPMCEXEC diotest5 -b 65536 -i 1000 -o 104857600
+dio25 $LTPMCEXEC diotest6 -b 65536 -i 1000 -o 104857600
 
 ### Run tests with larger vector array
-dio26 diotest6 -b 8192 -v 100
-dio27 diotest6 -b 8192 -o 1024000 -i 1000 -v 100
-dio28 diotest6 -b 8192 -o 1024000 -i 1000 -v 200
+dio26 $LTPMCEXEC diotest6 -b 8192 -v 100
+dio27 $LTPMCEXEC diotest6 -b 8192 -o 1024000 -i 1000 -v 100
+dio28 $LTPMCEXEC diotest6 -b 8192 -o 1024000 -i 1000 -v 200
 
 ### Run the tests with more children
 dio29 diotest3 -b 65536 -n 100 -i 100 -o 1024000

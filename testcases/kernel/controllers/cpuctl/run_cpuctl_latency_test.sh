@@ -146,7 +146,7 @@ PWD=`pwd`
 		for i in $(seq 1 $NUM_TASKS)
 		do
 			# Execute the load tasks
-			./cpuctl_latency_test $TEST_NUM &
+			$LTPMCEXEC ./cpuctl_latency_test $TEST_NUM &
 			if [ $? -ne 0 ]
 			then
 				echo "TBROK Failed to execute binary"
@@ -157,7 +157,7 @@ PWD=`pwd`
 		done
 
 		# Run the latency checking task
-		./cpuctl_latency_check_task $TEST_NUM $$ $allowed_latency &
+		$LTPMCEXEC ./cpuctl_latency_check_task $TEST_NUM $$ $allowed_latency &
 		if [ $? -ne 0 ]
 		then
 			echo "TBROK Failed to execute main binary"
@@ -177,7 +177,7 @@ PWD=`pwd`
 		for num in $(seq 1 $NUM_TASKS)
 		do
 			group=/dev/cpuctl/group_`expr $num % $NUM_GROUPS + 1`;
-			./cpuctl_latency_test $TEST_NUM $group &
+			$LTPMCEXEC ./cpuctl_latency_test $TEST_NUM $group &
 			if [ $? -ne 0 ]
 			then
 				echo "TBROK Failed to execute binary"
@@ -188,7 +188,7 @@ PWD=`pwd`
 		done;
 
 		# Calculate the alowed latency value
-		./cpuctl_latency_check_task $TEST_NUM $$ $allowed_latency $group &
+		$LTPMCEXEC ./cpuctl_latency_check_task $TEST_NUM $$ $allowed_latency $group &
 		if [ $? -ne 0 ]
 		then
 			echo "TBROK Failed to execute main binary";

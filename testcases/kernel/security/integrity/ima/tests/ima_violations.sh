@@ -157,7 +157,7 @@ test3()
 
 	echo 'testing testing' > $FILE
 
-	ima_mmap -f $FILE &
+	$LTPMCEXEC ima_mmap -f $FILE &
 	# wait for violations appear in logs
 	tst_sleep 1s
 

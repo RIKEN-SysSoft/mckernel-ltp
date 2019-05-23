@@ -255,7 +255,7 @@ base_test()
 	if [ $? -ne 0 ]; then
 		exit_status=1
 	else
-		cpuset_mem_hog &
+		$LTPMCEXEC cpuset_mem_hog &
 		pid=$!
 		general_memory_spread_test "$@" "$pid"
 		result_num=$?
@@ -302,7 +302,7 @@ test_spread_page2()
 	if [ $? -ne 0 ]; then
 		exit_status=1
 	else
-		cpuset_mem_hog &
+		$LTPMCEXEC cpuset_mem_hog &
 		pid=$!
 		general_memory_spread_test "1" "$cpus_all" "0" "0" "$pid"
 		result_num=$?

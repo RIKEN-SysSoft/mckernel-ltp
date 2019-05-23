@@ -29,9 +29,9 @@ if [ "x$(grep -w memory /proc/cgroups | cut -f4)" != "x1" ]; then
 	tst_brkm TCONF "Kernel does not support the memory resource controller"
 fi
 
-PAGESIZE=$(tst_getconf PAGESIZE)
+PAGESIZE=$($LTPMCEXEC tst_getconf PAGESIZE)
 if [ $? -ne 0 ]; then
-	tst_brkm TBROK "tst_getconf PAGESIZE failed"
+	tst_brkm TBROK "mcexec tst_getconf PAGESIZE failed"
 fi
 
 # Check for dependencies
@@ -189,7 +189,7 @@ test_mem_stat()
 	local check_after_free=$6
 
 	tst_resm TINFO "Running memcg_process $memtypes -s $size"
-	memcg_process $memtypes -s $size &
+	$LTPMCEXEC memcg_process $memtypes -s $size &
 	TST_CHECKPOINT_WAIT 0
 
 	warmup $!
@@ -220,7 +220,7 @@ test_mem_stat()
 test_max_usage_in_bytes()
 {
 	tst_resm TINFO "Running memcg_process $1 -s $2"
-	memcg_process $1 -s $2 &
+	$LTPMCEXEC memcg_process $1 -s $2 &
 	TST_CHECKPOINT_WAIT 0
 
 	warmup $!
@@ -248,7 +248,7 @@ test_max_usage_in_bytes()
 malloc_free_memory()
 {
 	tst_resm TINFO "Running memcg_process $1 -s $2"
-	memcg_process $1 -s $2 &
+	$LTPMCEXEC memcg_process $1 -s $2 &
 	TST_CHECKPOINT_WAIT 0
 
 	echo $! > tasks
@@ -287,7 +287,7 @@ test_proc_kill()
 		fi
 	fi
 
-	memcg_process $2 -s $3 &
+	$LTPMCEXEC memcg_process $2 -s $3 &
 	pid=$!
 	TST_CHECKPOINT_WAIT 0
 	echo $pid > tasks
@@ -366,7 +366,7 @@ test_hugepage()
 
 	echo $1 > /proc/sys/vm/nr_hugepages
 
-	memcg_process $2 --hugepage -s $3 > $TMP_FILE 2>&1 &
+	$LTPMCEXEC memcg_process $2 --hugepage -s $3 > $TMP_FILE 2>&1 &
 	TST_CHECKPOINT_WAIT 0
 
 	signal_memcg_process $! $3
@@ -413,7 +413,7 @@ test_subgroup()
 	echo $2 > subgroup/memory.limit_in_bytes
 
 	tst_resm TINFO "Running memcg_process --mmap-anon -s $PAGESIZES"
-	memcg_process --mmap-anon -s $PAGESIZES &
+	$LTPMCEXEC memcg_process --mmap-anon -s $PAGESIZES &
 	TST_CHECKPOINT_WAIT 0
 
 	warmup $! $PAGESIZES
@@ -451,7 +451,7 @@ test_move_charge()
 	mkdir subgroup_a
 
 	tst_resm TINFO "Running memcg_process $memtypes -s $size"
-	memcg_process $memtypes -s $size &
+	$LTPMCEXEC memcg_process $memtypes -s $size &
 	TST_CHECKPOINT_WAIT 0
 	warmup $!
 	if [ $? -ne 0 ]; then

@@ -24,6 +24,12 @@
 ##                                                                            ##
 ################################################################################
 
+
+### McKernel doesn't need this test.
+[ -n "$LTPMCEXEC" ] && exit 0
+
+
+
 cd $LTPROOT/testcases/bin
 
 export TCID="memcg_regression_test"
@@ -105,7 +111,7 @@ test_1()
 	mkdir memcg/0/
 	echo 0 > memcg/0/memory.limit_in_bytes
 
-	./memcg_test_1
+	$LTPMCEXEC ./memcg_test_1
 
 	rmdir memcg/0/
 
@@ -124,7 +130,7 @@ test_1()
 #---------------------------------------------------------------------------
 test_2()
 {
-	./memcg_test_2 &
+	$LTPMCEXEC ./memcg_test_2 &
 	pid1=$!
 	sleep 1
 
