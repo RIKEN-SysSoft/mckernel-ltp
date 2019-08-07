@@ -29,7 +29,7 @@ include $(top_srcdir)/include/mk/testcases.mk
 ifneq ($(HOSTCC),)
 CC			:= $(HOSTCC)
 CFLAGS			:= $(HOSTCFLAGS)
-LDFLAGS			:= $(HOSTLDFLAGS) -L$(top_srcdir)/hostlib
+LDFLAGS			:= $(HOSTLDFLAGS)
 endif
 
 CPPFLAGS		+= -D_GNU_SOURCE

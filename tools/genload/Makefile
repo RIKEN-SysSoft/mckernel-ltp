@@ -29,7 +29,7 @@ include $(top_srcdir)/include/mk/env_pre.mk
 ifneq ($(HOSTCC),)
 CC			:= $(HOSTCC)
 CFLAGS			:= $(HOSTCFLAGS)
-LDFLAGS			:= $(HOSTLDFLAGS) -L$(top_srcdir)/hostlib
+LDFLAGS			:= $(HOSTLDFLAGS)
 endif
 
 CFLAGS			+= -DPACKAGE=\"stress\" -DVERSION=\"0.17pre11\"
