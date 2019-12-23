@@ -350,6 +350,7 @@ main()
                 LOGFILE="-l $OPTARG" ;;
             *)
                 LOGFILE="-l $LTPROOT/results/$OPTARG"
+                PRETTY_PRT=" -p "
                 ALT_DIR_RES=1 ;;
             esac ;;
 
