@@ -2,7 +2,7 @@
 
 # Usage: cat /work/mcktest/ltp/install/runtest/{syscalls,ipc,mm,hugetlb} | ./gen_autotest_scripts.awk
 # This puts scritps on /work/mctest/data/script/ and
-# the test list on /work/mcktest/ostest-testlist.
+# the test list on /work/mcktest/data/ltp-testlist.
 #
 # Usage of the generated scripts:
 # McKernel run: AUTOTEST_HOME=/work/mcktest bash -x /work/mcktest/data/script/ltp-<test_name>
@@ -15,9 +15,7 @@ BEGIN {
     "cd " dir "/../.. && pwd -P" | getline autotest_home;
 
     scriptdir = sprintf("%s/data/script", autotest_home); 
-
-    testlistfile = sprintf("%s/data/ltp-testlist", autotest_home);
-    system("rm -f " testlistfile);
+    system("rm " scriptdir "/ltp-*");
 }
 
 !/^#|^$/ {
@@ -26,7 +24,7 @@ BEGIN {
     script_bn = sprintf("ltp-%s", testcase);
     script = sprintf("%s/%s", scriptdir, script_bn);
 
-    print script;
+    #print script;
 
     print "#!/bin/sh\n"  > script;
 
@@ -57,5 +55,4 @@ BEGIN {
 
     system("chmod +x " script);
 
-    print script_bn >> testlistfile;
 }
