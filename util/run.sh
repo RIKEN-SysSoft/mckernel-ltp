@@ -18,9 +18,11 @@ if [ "${linux_run}" != "yes" ]; then
 fi
 
 # Run LTP
+pushd $recorddir > /dev/null
 echo "$command_line" > $recorddir/command_line
-sudo bash -c "LTPMCEXEC=$mcexec MCEXEC_TIMEOUT=10800 MC_RESET_EACHTIME=0 $LTPDIR/runltp -f $recorddir/command_line"
+sudo bash -c "LTPMCEXEC=$mcexec MCEXEC_TIMEOUT=10800 MC_RESET_EACHTIME=0 $LTPDIR/runltp -l LTP_RUN.log -f $recorddir/command_line"
 exit_code=$?
+popd > /dev/null
 
 # OK/NG decision
 rc=0
