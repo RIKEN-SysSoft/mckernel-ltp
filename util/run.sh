@@ -10,7 +10,7 @@ fi
 ihkosctl=$MCKINSTALL/sbin/ihkosctl
 
 # Prepare working directory
-rm -rf $recorddir && mkdir -p $recorddir && pushd $recorddir
+rm -rf $recorddir && mkdir -p $recorddir
 
 # For unexpected kmsg check
 if [ "${linux_run}" != "yes" ]; then
@@ -19,10 +19,8 @@ fi
 
 # Run LTP
 echo "$command_line" > $recorddir/command_line
-sudo bash -c "LTPMCEXEC=$mcexec MCEXEC_TIMEOUT=10800 MC_RESET_EACHTIME=0 $LTPDIR/runltp -f $recorddir/command_line > $recordfile 2>&1"
+sudo bash -c "LTPMCEXEC=$mcexec MCEXEC_TIMEOUT=10800 MC_RESET_EACHTIME=0 $LTPDIR/runltp -f $recorddir/command_line"
 exit_code=$?
-
-popd
 
 # OK/NG decision
 rc=0

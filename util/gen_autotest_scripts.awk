@@ -14,7 +14,7 @@ BEGIN {
     "dirname " ARGV[0] | getline dir;
     "cd " dir "/../.. && pwd -P" | getline autotest_home;
 
-    scriptdir = sprintf("%s/data/script", autotest_home); 
+    scriptdir = sprintf("%s/data/scripts", autotest_home);
     system("rm " scriptdir "/ltp-*");
 }
 
@@ -36,23 +36,11 @@ BEGIN {
 
     # Switch recorddir for McKernel run and Linux run
 
-    printf("if [ \"${linux_run}\" != \"yes\" ]; then\n") >> script;
-
     recorddir_base = "$WORKDIR/output";
-    printf("\trecordfile=%s/ltp-%s.output\n", recorddir_base, testcase) >> script;
-    printf("\trecorddir=%s/ltp-%s\n", recorddir_base, testcase) >> script;
-
-    printf("else\n") >> script;
-
-    recorddir_base = sprintf("%s/data/linux", autotest_home);
-    printf("\trecordfile=%s/ltp-%s.output\n", recorddir_base, testcase, testno) >> script;
-    printf("\trecorddir=%s/ltp-%s\n", recorddir_base, testcase, testno) >> script;
-    
-    printf("fi\n\n") >> script;
+    printf("recorddir=%s/ltp-%s\n", recorddir_base, testcase) >> script;
 
     printf("command_line='%s'\n\n", command_line) >> script;
     print(". ${AUTOTEST_HOME}/ltp/util/run.sh") >> script;
 
     system("chmod +x " script);
-
 }
