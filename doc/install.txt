@@ -67,7 +67,8 @@
       kncc18$ ./configure --prefix=/other/ltp \
       > --with-open-posix-testsuite \
       > --with-realtime-testsuite \
-      > CC="icc -mmic" LDFLAGS="-Wl,-rpath=/opt/ppos/attached/lib" \
+      > --with-tirpc \
+      > CC=gcc \
       > HOSTCC="gcc -DMCEXEC_ENABLED" --host=x86_64-unknown-linux-gnu
 
       * prefix は LTP のインストール先ディレクトリです。このディレクトリは、
