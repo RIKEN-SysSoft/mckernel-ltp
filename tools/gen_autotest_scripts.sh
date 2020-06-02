@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Usage: cd <ltp-install>/bin && cat ../runtest/{syscalls,ipc,mm,hugetlb} | ./gen_autotest_scripts.awk
+# Usage: cd <ltp-install>/bin && cat ../runtest/{syscalls,ipc,mm,hugetlb} | ./gen_autotest_scripts.sh
 # This puts scritps on <autotest>/data/scripts/
 #
 # Usage of the generated scripts:
@@ -12,7 +12,7 @@ scriptdir="$AUTOTEST_HOME/data/scripts"
 rm -f $scriptdir/ltp-*
 
 while read testcase command_line; do
-    [[ $testcase =~ ^# ]] && continue
+    [[ $testcase =~ ^#|^[[:space:]]*$ ]] && continue
     script=$scriptdir/ltp-$testcase
 
 cat > $script <<'EOF'
