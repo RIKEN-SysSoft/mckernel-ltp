@@ -8,7 +8,7 @@ $MCKINSTALL/sbin/ihkosctl 0 clear_kmsg
 # Run LTP
 pushd $recorddir > /dev/null
 echo "$command_line" > $recorddir/command_line
-sudo bash -c " LTPMCEXEC=$MCKINSTALL/bin/mcexec MCEXEC_TIMEOUT=10800 MC_RESET_EACHTIME=0 $AUTOTEST_HOME/ltp/install/runltp -l LTP_RUN.log -f $recorddir/command_line"
+sudo bash -c "LTPMCEXEC=$MCKINSTALL/bin/mcexec MCEXEC_TIMEOUT=$TIMEOUT_RUN MC_RESET_EACHTIME=0 $AUTOTEST_HOME/ltp/install/runltp -l LTP_RUN.log -f $recorddir/command_line"
 exit_code=$?
 popd > /dev/null
 
