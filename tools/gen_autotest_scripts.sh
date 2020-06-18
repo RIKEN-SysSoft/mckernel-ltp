@@ -16,7 +16,7 @@ while read testcase command_line; do
     script=$scriptdir/ltp-$testcase
 
 cat > $script <<'EOF'
-#!/bin/sh
+#!/usr/bin/bash
 
 set -x
 
