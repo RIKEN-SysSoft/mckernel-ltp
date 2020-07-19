@@ -42,7 +42,18 @@ static void verify_getrandom(void)
 
 	SAFE_GETRLIMIT(RLIMIT_NOFILE, &lold);
 	lnew.rlim_max = lold.rlim_max;
-	lnew.rlim_cur = 3;
+
+	{
+		int i, sum = 0;
+
+		for (i = 0; i < 16; i++) {
+			if (fcntl(i, F_GETFD) >= 0) {
+				sum++;
+			}
+		}
+		lnew.rlim_cur = sum;
+	}
+
 	SAFE_SETRLIMIT(RLIMIT_NOFILE, &lnew);
 
 	TEST(tst_syscall(__NR_getrandom, buf, 100, 0));
