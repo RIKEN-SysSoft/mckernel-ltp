@@ -9,6 +9,8 @@
 SCRIPT_PATH=$(readlink -m "${BASH_SOURCE[0]}")
 AUTOTEST_HOME="${SCRIPT_PATH%/*/*/*/*}"
 scriptdir="$AUTOTEST_HOME/data/scripts"
+
+mkdir -p $scriptdir
 rm -f $scriptdir/ltp-*
 
 while read testcase command_line; do
