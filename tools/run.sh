@@ -14,14 +14,16 @@ popd > /dev/null
 
 # OK/NG decision
 rc=0
-[[ $exit_code != 0 ]] && rc=1
+(( exit_code != 0 )) && rc=1
 
 # Check if kmsg is empty
 $MCKINSTALL/sbin/ihkosctl 0 kmsg > $recorddir/kmsg.log
 [[ "$(cat $recorddir/kmsg.log | wc -l)" != 1 ]] && echo "$(basename $0): WARNING: kmsg isn't empty."
 
 # Check if process/thread structs remain
-! $AUTOTEST_HOME/bin/getnumprocess.sh && echo "$(basename $0): INFO: $nprocs process(es) remaining" && rc=1
-! $AUTOTEST_HOME/bin/getnumthread.sh && echo "$(basename $0): INFO: $nprocs thread(s) remaining" && rc=1
+nproc=$($AUTOTEST_HOME/bin/getnumprocess.sh)
+(( nproc != 0 )) && echo "$(basename $0): INFO: $nproc process(es) remaining" && rc=1
+nthr=$($AUTOTEST_HOME/bin/getnumthread.sh)
+(( nthr != 0 )) && echo "$(basename $0): INFO: $nthr thread(s) remaining" && rc=1
 
 exit $rc
